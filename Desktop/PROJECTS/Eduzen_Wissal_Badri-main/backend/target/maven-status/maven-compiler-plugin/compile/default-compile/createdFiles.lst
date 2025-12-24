@@ -1,0 +1,16 @@
+com\eduzen\management\ManagementApplication.class
+com\eduzen\management\repository\FormateurRepository.class
+com\eduzen\management\controller\FormateurController.class
+com\eduzen\management\config\SecurityConfig.class
+com\eduzen\management\controller\AuthController.class
+com\eduzen\management\model\Formation.class
+com\eduzen\management\dto\FormateurRequest.class
+com\eduzen\management\security\UserDetailsServiceImpl.class
+com\eduzen\management\model\User.class
+com\eduzen\management\repository\FormationRepository.class
+com\eduzen\management\controller\FormationController.class
+com\eduzen\management\model\Formateur.class
+com\eduzen\management\repository\UserRepository.class
+com\eduzen\management\config\DataInitializer.class
+com\eduzen\management\repository\RoleRepository.class
+com\eduzen\management\model\Role.class
