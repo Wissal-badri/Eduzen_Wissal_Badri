@@ -50,6 +50,22 @@ public class DataInitializer {
                         userRepository.save(admin);
                         System.out.println("... DataInitializer: Admin user created successfully.");
                     });
+
+            // Initialize Assistant User
+            userRepository.findByUsername("assistant").ifPresentOrElse(
+                    assistant -> {
+                    },
+                    () -> {
+                        System.out.println("... DataInitializer: Assistant user not found. Creating...");
+                        Role assistantRole = roleRepository.findByName("ASSISTANT").get();
+                        User assistant = new User();
+                        assistant.setUsername("assistant");
+                        assistant.setPassword(passwordEncoder.encode("assistant123"));
+                        assistant.setEmail("assistant@eduzen.com");
+                        assistant.setRole(assistantRole);
+                        userRepository.save(assistant);
+                        System.out.println("... DataInitializer: Assistant user created successfully.");
+                    });
         };
     }
 }

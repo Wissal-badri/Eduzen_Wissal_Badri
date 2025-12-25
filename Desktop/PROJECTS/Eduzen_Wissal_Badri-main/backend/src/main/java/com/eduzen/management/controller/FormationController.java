@@ -47,16 +47,17 @@ public class FormationController {
             formation.setProgrammeDetaille(formationDetails.getProgrammeDetaille());
             formation.setCategorie(formationDetails.getCategorie());
             formation.setVille(formationDetails.getVille());
+            formation.setFormateur(formationDetails.getFormateur());
             return ResponseEntity.ok(formationRepository.save(formation));
         }).orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteFormation(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteFormation(@PathVariable Long id) {
         return formationRepository.findById(id).map(formation -> {
             formationRepository.delete(formation);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok().<Void>build();
         }).orElse(ResponseEntity.notFound().build());
     }
 }

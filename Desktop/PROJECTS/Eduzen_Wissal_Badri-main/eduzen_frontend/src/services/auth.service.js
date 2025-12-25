@@ -47,11 +47,52 @@ const getCurrentUser = () => {
   return JSON.parse(localStorage.getItem("user"));
 };
 
+const changePassword = (currentPassword, newPassword) => {
+  const user = getCurrentUser();
+  const headers = {
+    Authorization: "Basic " + user.authdata
+  };
+
+  return axios.post(API_URL + "change-password", {
+    currentPassword,
+    newPassword
+  }, { headers }).then(response => {
+    // If successful, update the stored authdata with the new password
+    const newToken = btoa(user.username + ":" + newPassword);
+    const updatedUser = {
+      ...user,
+      authdata: newToken,
+      lastPasswordChange: response.data.lastPasswordChange
+    };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    return response.data;
+  });
+};
+
+const updatePreferences = (preferences) => {
+  const user = getCurrentUser();
+  const headers = {
+    Authorization: "Basic " + user.authdata
+  };
+
+  return axios.put(API_URL + "preferences", preferences, { headers }).then(response => {
+    const updatedUser = {
+      ...user,
+      emailAlerts: response.data.emailAlerts,
+      newsletters: response.data.newsletters
+    };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    return response.data;
+  });
+};
+
 const AuthService = {
   login,
   register,
   logout,
   getCurrentUser,
+  changePassword,
+  updatePreferences,
 };
 
 export default AuthService;

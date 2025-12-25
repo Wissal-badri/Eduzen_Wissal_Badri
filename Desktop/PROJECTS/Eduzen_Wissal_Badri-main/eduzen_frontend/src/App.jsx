@@ -35,7 +35,7 @@ function App() {
 
       <main style={{ flex: 1 }}>
         <Routes>
-          <Route path="/" element={currentUser ? <Navigate to="/dashboard" /> : <Login />} />
+          <Route path="/" element={<Login />} />
           <Route path="/login" element={currentUser ? <Navigate to="/dashboard" /> : <Login />} />
           <Route path="/dashboard" element={currentUser ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/profile" element={<Navigate to="/dashboard" />} />

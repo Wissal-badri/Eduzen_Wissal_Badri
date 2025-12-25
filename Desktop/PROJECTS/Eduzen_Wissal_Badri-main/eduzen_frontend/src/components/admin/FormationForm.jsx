@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import FormationService from "../../services/formation.service";
 
-const FormationForm = ({ onSuccess, formationToEdit }) => {
+const FormationForm = ({ onSuccess, formationToEdit, formateurs }) => {
     const [formation, setFormation] = useState({
         titre: "",
         nombreHeures: "",
@@ -9,7 +9,8 @@ const FormationForm = ({ onSuccess, formationToEdit }) => {
         objectifs: "",
         programmeDetaille: "",
         categorie: "",
-        ville: ""
+        ville: "",
+        formateurId: ""
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -17,7 +18,10 @@ const FormationForm = ({ onSuccess, formationToEdit }) => {
 
     useEffect(() => {
         if (formationToEdit) {
-            setFormation(formationToEdit);
+            setFormation({
+                ...formationToEdit,
+                formateurId: formationToEdit.formateur ? formationToEdit.formateur.id : ""
+            });
         }
     }, [formationToEdit]);
 
@@ -40,7 +44,8 @@ const FormationForm = ({ onSuccess, formationToEdit }) => {
             objectifs: formation.objectifs ? formation.objectifs.trim() : "",
             programmeDetaille: formation.programmeDetaille ? formation.programmeDetaille.trim() : "",
             categorie: formation.categorie ? formation.categorie.trim() : "",
-            ville: formation.ville ? formation.ville.trim() : ""
+            ville: formation.ville ? formation.ville.trim() : "",
+            formateur: formation.formateurId ? { id: parseInt(formation.formateurId, 10) } : null
         };
 
         // Log payload for debugging
@@ -160,8 +165,23 @@ const FormationForm = ({ onSuccess, formationToEdit }) => {
                         </div>
                     </div>
 
-
-
+                    <div className="input-group">
+                        <label className="input-label">Formateur Assigné</label>
+                        <select
+                            name="formateurId"
+                            className="input-field"
+                            value={formation.formateurId}
+                            onChange={handleChange}
+                            style={{ background: 'rgba(255,255,255,0.05)', cursor: 'pointer', color: '#fff' }}
+                        >
+                            <option value="" style={{ background: '#1e293b' }}>-- Choisir un formateur --</option>
+                            {formateurs && formateurs.map(f => (
+                                <option key={f.id} value={f.id} style={{ background: '#1e293b' }}>
+                                    {f.user.username} ({f.competences})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                     <div className="input-group">
                         <label className="input-label">Objectifs</label>
                         <textarea

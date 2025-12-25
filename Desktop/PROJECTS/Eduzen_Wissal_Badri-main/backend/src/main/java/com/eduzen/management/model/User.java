@@ -24,6 +24,15 @@ public class User {
     @Column(unique = true)
     private String email;
 
+    @Column(name = "last_password_change")
+    private java.time.LocalDateTime lastPasswordChange;
+
+    @Column(name = "email_alerts")
+    private Boolean emailAlerts = true;
+
+    @Column(name = "newsletters")
+    private Boolean newsletters = false;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Role role;

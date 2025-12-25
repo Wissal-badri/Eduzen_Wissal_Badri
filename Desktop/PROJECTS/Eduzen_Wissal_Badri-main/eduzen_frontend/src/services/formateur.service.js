@@ -11,9 +11,19 @@ const createFormateur = (formateurData) => {
     return axios.post(API_URL, formateurData, { headers: authHeader() });
 };
 
+const updateFormateur = (id, formateurData) => {
+    return axios.put(`${API_URL}/${id}`, formateurData, { headers: authHeader() });
+};
+
+const deleteFormateur = (id) => {
+    return axios.delete(`${API_URL}/${id}`, { headers: authHeader() });
+};
+
 const FormateurService = {
     getAllFormateurs,
     createFormateur,
+    updateFormateur,
+    deleteFormateur
 };
 
 export default FormateurService;

@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import FormateurService from "../../services/formateur.service";
 
-const FormateurForm = ({ onSuccess }) => {
+const FormateurForm = ({ onSuccess, formateurToEdit }) => {
+    const isEdit = !!formateurToEdit;
+
     const [formateur, setFormateur] = useState({
-        username: "",
+        username: formateurToEdit?.user?.username || "",
         password: "",
-        email: "",
-        competences: "",
-        remarques: ""
+        email: formateurToEdit?.user?.email || "",
+        competences: formateurToEdit?.competences || "",
+        remarques: formateurToEdit?.remarques || ""
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -22,28 +24,30 @@ const FormateurForm = ({ onSuccess }) => {
         setLoading(true);
         setError("");
 
-        // Prepare payload with sanitized data
         const payload = {
             username: formateur.username ? formateur.username.trim() : "",
             email: formateur.email ? formateur.email.trim() : "",
-            password: formateur.password, // Don't trim password usually, but context dependent.
+            password: formateur.password,
             competences: formateur.competences ? formateur.competences.trim() : "",
             remarques: formateur.remarques ? formateur.remarques.trim() : ""
         };
 
-        // Log payload for debugging
-        console.log("Sending formateur payload:", payload);
+        const apiCall = isEdit 
+            ? FormateurService.updateFormateur(formateurToEdit.id, payload)
+            : FormateurService.createFormateur(payload);
 
-        FormateurService.createFormateur(payload).then(
+        apiCall.then(
             () => {
                 setLoading(false);
-                setFormateur({
-                    username: "",
-                    password: "",
-                    email: "",
-                    competences: "",
-                    remarques: ""
-                });
+                if (!isEdit) {
+                    setFormateur({
+                        username: "",
+                        password: "",
+                        email: "",
+                        competences: "",
+                        remarques: ""
+                    });
+                }
                 onSuccess();
             },
             (err) => {
@@ -60,7 +64,7 @@ const FormateurForm = ({ onSuccess }) => {
     return (
         <div className="glass card" style={{ maxWidth: '800px', margin: '2rem auto', padding: '3rem' }}>
             <h2 className="text-gradient font-black" style={{ fontSize: '2rem', marginBottom: '2rem' }}>
-                Ajouter un Formateur
+                {isEdit ? "Modifier le Formateur" : "Ajouter un Formateur"}
             </h2>
 
             <form onSubmit={handleSubmit}>
@@ -92,7 +96,7 @@ const FormateurForm = ({ onSuccess }) => {
                 </div>
 
                 <div className="input-group">
-                    <label className="input-label">Mot de passe</label>
+                    <label className="input-label">Mot de passe {isEdit && "(Laissez vide pour conserver l'actuel)"}</label>
                     <input
                         type="password"
                         name="password"
@@ -100,7 +104,7 @@ const FormateurForm = ({ onSuccess }) => {
                         value={formateur.password}
                         onChange={handleChange}
                         placeholder="••••••••"
-                        required
+                        required={!isEdit}
                     />
                 </div>
 
@@ -132,7 +136,7 @@ const FormateurForm = ({ onSuccess }) => {
                 {error && <div className="text-error" style={{ marginBottom: '1.5rem', color: 'var(--error)' }}>{error}</div>}
 
                 <button className="btn btn-primary" style={{ width: '100%', padding: '1rem' }} disabled={loading}>
-                    {loading ? "Ajout en cours..." : "Enregistrer le Formateur"}
+                    {loading ? (isEdit ? "Mise à jour..." : "Ajout en cours...") : (isEdit ? "Mettre à jour le Formateur" : "Enregistrer le Formateur")}
                 </button>
             </form>
         </div>

@@ -34,4 +34,8 @@ public class Formation {
     private String categorie;
 
     private String ville;
+
+    @ManyToOne
+    @JoinColumn(name = "formateur_id")
+    private Formateur formateur;
 }
