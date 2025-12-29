@@ -11,6 +11,7 @@ import CalendarView from "./CalendarView";
 import IndividuService from "../services/individu.service";
 import InscriptionService from "../services/inscription.service";
 import NotificationService from "../services/notification.service";
+import PlanningService from "../services/planning.service";
 import axios from "axios";
 import authHeader from "../services/auth-header";
 import ProfileCompletion from "./ProfileCompletion";
@@ -28,13 +29,13 @@ const translations = {
         active_trainings: "Formations Actives",
         total_formateurs: "Formateurs Total",
         dashboard_title: "Tableau de Bord",
-        new_training: "+ Nouvelle Formation",
+        new_training: "Nouvelle Formation",
         trainings_desc: "Créez et gérez votre catalogue de cours",
         formateurs_desc: "Gérez les intervenants et leurs compétences",
-        new_formateur: "+ Nouveau Formateur",
+        new_formateur: "Nouveau Formateur",
         entreprises: "Gestion des Entreprises",
         entreprises_desc: "Gérez votre carnet d'adresses entreprises",
-        new_entreprise: "+ Nouvelle Entreprise",
+        new_entreprise: "Nouvelle Entreprise",
         planning: "Planning et Calendrier",
         planning_desc: "Gérez les emplois du temps des formations",
         no_entreprises: "Aucune entreprise enregistrée.",
@@ -60,7 +61,7 @@ const translations = {
         delete_account: "Supprimer mon compte",
         delete_account_desc: "Cette action est irréversible",
         delete: "Supprimer",
-        back_list: "← Retour à la liste",
+        back_list: "Retour à la liste",
         no_trainings: "Aucune formation disponible pour le moment.",
         no_formateurs: "Aucun formateur disponible pour le moment.",
         confirm_delete_training: "Êtes-vous sûr de vouloir supprimer cette formation ?",
@@ -92,7 +93,12 @@ const translations = {
         latest_news: "Dernières Infos",
         individus: "Gestion des Individus",
         individus_desc: "Gérez les inscriptions des particuliers",
-        confirm_delete_individu: "Supprimer cette inscription ?"
+        confirm_delete_individu: "Supprimer cette inscription ?",
+        inscription_title: "Inscription à la formation",
+        confirm_unenroll_title: "Désinscription",
+        confirm_unenroll: "Êtes-vous sûr de vouloir vous désinscrire de cette formation ?",
+        unenroll_btn: "Se désinscrire",
+        keep_enrolled: "Rester inscrit"
     },
     en: {
         overview: "Overview",
@@ -106,13 +112,13 @@ const translations = {
         active_trainings: "Active Trainings",
         total_formateurs: "Total Trainers",
         dashboard_title: "Dashboard",
-        new_training: "+ New Training",
+        new_training: "New Training",
         trainings_desc: "Create and manage your course catalog",
         formateurs_desc: "Manage trainers and their skills",
-        new_formateur: "+ New Trainer",
+        new_formateur: "New Trainer",
         entreprises: "Company Management",
         entreprises_desc: "Manage your business address book",
-        new_entreprise: "+ New Company",
+        new_entreprise: "New Company",
         planning: "Planning & Calendar",
         planning_desc: "Manage training schedules",
         no_entreprises: "No companies registered.",
@@ -138,7 +144,7 @@ const translations = {
         delete_account: "Delete account",
         delete_account_desc: "This action is irreversible",
         delete: "Delete",
-        back_list: "← Back to list",
+        back_list: "Back to list",
         no_trainings: "No training available at the moment.",
         no_formateurs: "No trainers available at the moment.",
         confirm_delete_training: "Are you sure you want to delete this training?",
@@ -148,6 +154,11 @@ const translations = {
         new_password: "New Password",
         confirm_password: "Confirm New Password",
         save_changes: "Save Changes",
+        inscription_title: "Course Enrollment",
+        confirm_unenroll_title: "Unenrollment",
+        confirm_unenroll: "Are you sure you want to unenroll from this course?",
+        unenroll_btn: "Unenroll",
+        keep_enrolled: "Stay enrolled",
         password_mismatch: "New passwords do not match",
         password_success: "Password updated successfully!",
         password_error: "Failed: Check your current password",
@@ -184,7 +195,7 @@ const Dashboard = () => {
     const [myInscriptions, setMyInscriptions] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
-    const [stats, setStats] = useState({ totalInscriptions: 0 });
+    const [stats, setStats] = useState({ totalInscriptions: 0, totalIndividus: 0 });
     const [lang, setLang] = useState(localStorage.getItem("lang") || "fr");
     const [isLangModalOpen, setIsLangModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -215,6 +226,20 @@ const Dashboard = () => {
     const [formateurToDelete, setFormateurToDelete] = useState(null);
     const [entrepriseToDelete, setEntrepriseToDelete] = useState(null);
     const [individuToDelete, setIndividuToDelete] = useState(null);
+    const [allInscriptions, setAllInscriptions] = useState([]);
+    const [plannings, setPlannings] = useState([]);
+    const [alertConfig, setAlertConfig] = useState(null); // { title: string, message: string, type: 'success' | 'error' | 'info' }
+    const [showEnrollmentForm, setShowEnrollmentForm] = useState(false);
+    const [enrollmentFormation, setEnrollmentFormation] = useState(null);
+    const [enrollmentData, setEnrollmentData] = useState({
+        nom: currentUser.lastName || '',
+        prenom: currentUser.firstName || '',
+        email: currentUser.email || '',
+        telephone: currentUser.phone || '',
+        ville: '',
+        dateNaissance: ''
+    });
+    const [trainingToUnenroll, setTrainingToUnenroll] = useState(null);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -366,6 +391,23 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const res = await axios.get("http://localhost:8096/api/auth/me", { headers: authHeader() });
+                if (res.data) {
+                    const token = JSON.parse(localStorage.getItem("user"))?.authdata;
+                    const updatedUser = { ...res.data, authdata: token };
+                    localStorage.setItem("user", JSON.stringify(updatedUser));
+                    setCurrentUser(updatedUser);
+                }
+            } catch (err) {
+                console.error("Failed to refresh user data", err);
+            }
+        };
+        fetchCurrentUser();
+    }, []); // Run once on mount
+
+    useEffect(() => {
         if (currentUser?.id) {
             loadFormations();
             loadMemos();
@@ -377,6 +419,8 @@ const Dashboard = () => {
                 loadIndividus();
                 loadStats();
                 loadNotifications();
+                loadAllInscriptions();
+                loadPlannings();
             }
             if (isIndividu) {
                 loadMyInscriptions();
@@ -398,6 +442,14 @@ const Dashboard = () => {
     const loadNotifications = () => {
         NotificationService.getNotifications().then(res => setNotifications(res.data));
         NotificationService.getUnreadCount().then(res => setUnreadNotifications(res.data));
+    };
+
+    const loadAllInscriptions = () => {
+        InscriptionService.getAllInscriptions().then(res => setAllInscriptions(res.data));
+    };
+
+    const loadPlannings = () => {
+        PlanningService.getAllPlannings().then(res => setPlannings(res.data));
     };
 
     const handleEditFormateur = (formateur) => {
@@ -436,7 +488,11 @@ const Dashboard = () => {
                 },
                 (err) => {
                     setFormateurToDelete(null);
-                    alert("Erreur lors de la suppression: " + (err.response?.data?.message || err.message));
+                    setAlertConfig({
+                        title: "Erreur",
+                        message: (err.response?.data?.message || err.message),
+                        type: 'error'
+                    });
                 }
             );
         }
@@ -636,6 +692,15 @@ const Dashboard = () => {
 
                     {(isAdmin || isAssistant) && (
                         <button
+                            className={`nav-item ${activeTab === 'inscriptions' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('inscriptions')}
+                        >
+                            <span className="icon">📝</span> Inscriptions
+                        </button>
+                    )}
+
+                    {(isAdmin || isAssistant) && (
+                        <button
                             className={`nav-item ${activeTab === 'notifications' ? 'active' : ''}`}
                             onClick={() => setActiveTab('notifications')}
                             style={{ position: 'relative' }}
@@ -677,7 +742,7 @@ const Dashboard = () => {
                             <h1 className="text-gradient font-black">Catalogue de Formations</h1>
                             <p className="text-muted">Découvrez et inscrivez-vous à nos sessions disponibles</p>
                         </header>
-                        {trainings.filter(f => f.statut === 'OUVERTE').length === 0 ? (
+                        {trainings.filter(f => f.pourIndividus || f.statut === 'OUVERTE').length === 0 ? (
                             <div className="glass card text-center" style={{ padding: '6rem 2rem', border: '1px dashed rgba(255,255,255,0.1)' }}>
                                 <div style={{
                                     fontSize: '4rem',
@@ -691,45 +756,142 @@ const Dashboard = () => {
                             </div>
                         ) : (
                             <div className="trainings-grid">
-                                {trainings.filter(f => f.statut === 'OUVERTE').map(f => {
+                                {trainings.filter(f => f.pourIndividus || f.statut === 'OUVERTE').map(f => {
                                     const isEnrolled = myInscriptions.some(ins => ins.formation?.id === f.id);
                                     return (
-                                        <div key={f.id} className="training-card glass fade-in" style={{ padding: '2rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                                                <div className="training-badge" style={{ position: 'static', background: 'rgba(6, 182, 212, 0.1)', color: 'var(--primary)', borderColor: 'rgba(6, 182, 212, 0.3)' }}>{f.statut}</div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600' }}>#{f.id}</div>
-                                            </div>
-                                            <h3 style={{ fontSize: '1.4rem', fontWeight: '800', lineHeight: '1.3', marginBottom: '1rem' }}>{f.titre}</h3>
-                                            <p className="training-desc" style={{ marginBottom: '2rem', height: 'auto', display: 'block' }}>{f.objectifs}</p>
-
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                                    <span>⏱️</span> {f.nombreHeures}h
+                                        <div key={f.id} className="training-card glass fade-in" style={{
+                                            padding: '2rem',
+                                            minHeight: '420px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            background: 'rgba(16, 23, 42, 0.4)',
+                                            border: '1px solid rgba(255, 255, 255, 0.08)'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                                <div style={{
+                                                    padding: '0.4rem 0.9rem',
+                                                    borderRadius: '2rem',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '800',
+                                                    background: 'rgba(34, 211, 238, 0.15)',
+                                                    color: '#22d3ee',
+                                                    border: '1px solid rgba(34, 211, 238, 0.3)',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.05em'
+                                                }}>
+                                                    BIENTÔT
                                                 </div>
-                                                <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }}></div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                                    <span>📍</span> {f.ville}
+                                                <div style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-muted)', opacity: 0.4 }}>#{f.id}</div>
+                                            </div>
+
+                                            <h3 style={{ fontSize: '1.5rem', fontWeight: '800', lineHeight: '1.3', marginBottom: '0.8rem', color: '#fff' }}>
+                                                {f.titre}
+                                            </h3>
+
+                                            <p className="training-desc" style={{
+                                                marginBottom: '1.5rem',
+                                                fontSize: '0.9rem',
+                                                color: 'var(--text-muted)',
+                                                lineHeight: '1.6',
+                                                height: 'auto',
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: '3',
+                                                WebkitBoxOrient: 'vertical',
+                                                overflow: 'hidden',
+                                                opacity: 0.8
+                                            }}>
+                                                {f.objectifs}
+                                            </p>
+
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1rem', marginBottom: '2.5rem' }}>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.6rem',
+                                                    color: 'var(--text)',
+                                                    fontSize: '0.85rem',
+                                                    background: 'rgba(255,255,255,0.03)',
+                                                    padding: '0.5rem 0.8rem',
+                                                    borderRadius: '0.8rem'
+                                                }}>
+                                                    <span>⏱️</span> <strong>{f.nombreHeures}h</strong>
+                                                </div>
+                                                <div style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.6rem',
+                                                    color: 'var(--text)',
+                                                    fontSize: '0.85rem',
+                                                    background: 'rgba(255,255,255,0.03)',
+                                                    padding: '0.5rem 0.8rem',
+                                                    borderRadius: '0.8rem'
+                                                }}>
+                                                    <span>📍</span> <strong>{f.ville}</strong>
                                                 </div>
                                             </div>
 
-                                            <div className="training-footer" style={{ marginTop: 'auto', paddingTop: '1.5rem' }}>
+                                            <div className="training-footer" style={{
+                                                marginTop: 'auto',
+                                                paddingTop: '1.5rem',
+                                                borderTop: '1px solid rgba(255,255,255,0.05)',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center'
+                                            }}>
                                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Investissement</span>
-                                                    <span className="price" style={{ fontSize: '1.5rem' }}>{f.cout} <small style={{ fontSize: '0.8rem', opacity: 0.7 }}>MAD</small></span>
+                                                    <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: '700', marginBottom: '0.2rem' }}>INVESTISSEMENT</span>
+                                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
+                                                        <span style={{ fontSize: '1.6rem', fontWeight: '900', color: '#fff' }}>{f.cout}</span>
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'var(--text-muted)' }}>MAD</span>
+                                                    </div>
                                                 </div>
-                                                <button
-                                                    className={`btn ${isEnrolled ? 'btn-outline' : 'btn-primary'}`}
-                                                    disabled={isEnrolled}
-                                                    style={{ padding: '0.8rem 1.4rem', borderRadius: '1rem' }}
-                                                    onClick={() => {
-                                                        InscriptionService.registerToFormation(f.id).then(() => {
-                                                            loadMyInscriptions();
-                                                            alert("Inscription réussie !");
-                                                        });
-                                                    }}
-                                                >
-                                                    {isEnrolled ? "✓ Inscrit" : "S'inscrire"}
-                                                </button>
+
+                                                <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                                                    <button
+                                                        className={`btn ${isEnrolled ? 'btn-outline' : 'btn-primary'}`}
+                                                        style={{
+                                                            padding: '0.7rem 1.4rem',
+                                                            borderRadius: '0.8rem',
+                                                            fontSize: '0.85rem',
+                                                            fontWeight: '800',
+                                                            boxShadow: isEnrolled ? 'none' : '0 8px 16px rgba(34, 211, 238, 0.2)'
+                                                        }}
+                                                        onClick={() => {
+                                                            if (isEnrolled) {
+                                                                setTrainingToUnenroll(f);
+                                                            } else {
+                                                                setEnrollmentFormation(f);
+                                                                setEnrollmentData({
+                                                                    nom: currentUser.lastName || '',
+                                                                    prenom: currentUser.firstName || '',
+                                                                    email: currentUser.email || '',
+                                                                    telephone: currentUser.phone || '',
+                                                                    ville: '',
+                                                                    dateNaissance: ''
+                                                                });
+                                                                setShowEnrollmentForm(true);
+                                                            }
+                                                        }}
+                                                    >
+                                                        {isEnrolled ? "✓ Inscrit" : "S'inscrire"}
+                                                    </button>
+                                                    <button
+                                                        className="btn"
+                                                        style={{
+                                                            padding: '0.65rem 1.2rem',
+                                                            borderRadius: '0.8rem',
+                                                            border: '1px solid rgba(34, 211, 238, 0.3)',
+                                                            color: '#22d3ee',
+                                                            fontSize: '0.85rem',
+                                                            fontWeight: '700',
+                                                            background: 'rgba(34,211,238,0.03)',
+                                                            transition: 'all 0.2s ease'
+                                                        }}
+                                                        onClick={() => setSelectedFormation(f)}
+                                                    >
+                                                        Détails
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -895,11 +1057,11 @@ const Dashboard = () => {
                                         </div>
                                     </div>
 
-                                    {/* Inscriptions */}
-                                    <div className="stat-card glass" onClick={() => setActiveTab('individus')} style={{
+                                    {/* Inscriptions Formations */}
+                                    <div className="stat-card glass" onClick={() => setActiveTab('inscriptions')} style={{
                                         cursor: 'pointer',
-                                        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.02))',
-                                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                                        background: 'linear-gradient(135deg, rgba(63, 102, 241, 0.1), rgba(63, 102, 241, 0.02))',
+                                        border: '1px solid rgba(63, 102, 241, 0.2)',
                                         borderLeft: '4px solid #6366f1',
                                         padding: '1rem 1.2rem'
                                     }}>
@@ -912,13 +1074,35 @@ const Dashboard = () => {
                                             </div>
                                             <div style={{ marginTop: '0.6rem' }}>
                                                 <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>{stats.totalInscriptions}</span>
-                                                <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Nouveaux candidats</p>
+                                                <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Inscriptions totales</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Individus Enregistrés */}
+                                    <div className="stat-card glass" onClick={() => setActiveTab('individus')} style={{
+                                        cursor: 'pointer',
+                                        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.02))',
+                                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                                        borderLeft: '4px solid #10b981',
+                                        padding: '1rem 1.2rem'
+                                    }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>Individus</span>
+                                                <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '10px', color: '#10b981' }}>
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                                </div>
+                                            </div>
+                                            <div style={{ marginTop: '0.6rem' }}>
+                                                <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>{stats.totalIndividus || 0}</span>
+                                                <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Individus enregistrés</p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="memo-section glass" style={{ marginTop: '1.5rem', padding: '1.5rem', maxWidth: '1000px' }}>
+                                <div className="memo-section glass" style={{ marginTop: '1.5rem', padding: '1.5rem', maxWidth: '600px' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
                                         <div>
                                             <h2 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '0.2rem' }}>{t('memos')}</h2>
@@ -1309,7 +1493,27 @@ const Dashboard = () => {
                 {
                     activeTab === 'add-entreprise' && (isAdmin || isAssistant) && (
                         <section className="fade-in">
-                            <button className="auth-nav-link" onClick={() => { setActiveTab('entreprises'); setEntrepriseToEdit(null); }}>{t('back_list')}</button>
+                            <button
+                                className="btn-back glass"
+                                onClick={() => { setActiveTab('entreprises'); setEntrepriseToEdit(null); }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.8rem',
+                                    padding: '0.7rem 1.2rem',
+                                    borderRadius: '1rem',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    color: 'var(--primary)',
+                                    fontWeight: '700',
+                                    fontSize: '0.9rem',
+                                    cursor: 'pointer',
+                                    marginBottom: '2rem',
+                                    transition: 'all 0.3s ease'
+                                }}
+                            >
+                                <span style={{ fontSize: '1.2rem' }}>←</span> {t('back_list')}
+                            </button>
                             <EntrepriseForm
                                 onSuccess={() => { setActiveTab('entreprises'); setEntrepriseToEdit(null); loadEntreprises(); }}
                                 entrepriseToEdit={entrepriseToEdit}
@@ -1370,7 +1574,27 @@ const Dashboard = () => {
                 {
                     activeTab === 'add-formateur' && (isAdmin || isAssistant) && (
                         <section className="fade-in">
-                            <button className="auth-nav-link" onClick={() => { setActiveTab('formateurs'); setFormateurToEdit(null); }}>{t('back_list')}</button>
+                            <button
+                                className="btn-back glass"
+                                onClick={() => { setActiveTab('formateurs'); setFormateurToEdit(null); }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.8rem',
+                                    padding: '0.7rem 1.2rem',
+                                    borderRadius: '1rem',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    color: 'var(--primary)',
+                                    fontWeight: '700',
+                                    fontSize: '0.9rem',
+                                    cursor: 'pointer',
+                                    marginBottom: '2rem',
+                                    transition: 'all 0.3s ease'
+                                }}
+                            >
+                                <span style={{ fontSize: '1.2rem' }}>←</span> {t('back_list')}
+                            </button>
                             <FormateurForm
                                 onSuccess={() => { setActiveTab('formateurs'); setFormateurToEdit(null); loadFormateurs(); }}
                                 formateurToEdit={formateurToEdit}
@@ -1382,7 +1606,27 @@ const Dashboard = () => {
                 {
                     activeTab === 'add-training' && (isAdmin || isAssistant) && (
                         <section className="fade-in">
-                            <button className="auth-nav-link" onClick={() => { setActiveTab('trainings'); setFormationToEdit(null); }}>{t('back_list')}</button>
+                            <button
+                                className="btn-back glass"
+                                onClick={() => { setActiveTab('trainings'); setFormationToEdit(null); }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.8rem',
+                                    padding: '0.7rem 1.2rem',
+                                    borderRadius: '1rem',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    color: 'var(--primary)',
+                                    fontWeight: '700',
+                                    fontSize: '0.9rem',
+                                    cursor: 'pointer',
+                                    marginBottom: '2rem',
+                                    transition: 'all 0.3s ease'
+                                }}
+                            >
+                                <span style={{ fontSize: '1.2rem' }}>←</span> {t('back_list')}
+                            </button>
                             <FormationForm
                                 onSuccess={() => { setActiveTab('trainings'); setFormationToEdit(null); loadFormations(); }}
                                 formationToEdit={formationToEdit}
@@ -1561,6 +1805,129 @@ const Dashboard = () => {
                                                 )}
                                             </div>
                                         ))}
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+                    )
+                }
+
+                {
+                    (isAdmin || isAssistant) && activeTab === 'inscriptions' && (
+                        <section className="fade-in">
+                            <header className="content-title">
+                                <h1 className="text-gradient font-black">Gestion des Inscriptions</h1>
+                                <p className="text-muted">Affectez les individus à des sessions de formation</p>
+                            </header>
+
+                            <div className="inscriptions-list card glass" style={{ padding: '2.5rem', background: 'rgba(10, 15, 30, 0.4)' }}>
+                                {allInscriptions.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '4rem' }}>
+                                        <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>📝</div>
+                                        <p className="text-muted">Aucune inscription à gérer pour le moment.</p>
+                                    </div>
+                                ) : (
+                                    <div className="table-wrapper" style={{ overflowX: 'auto' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.8rem' }}>
+                                            <thead>
+                                                <tr style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                                    <th style={{ padding: '0 1.5rem' }}>Individu</th>
+                                                    <th style={{ padding: '0 1.5rem' }}>Formation Voulue</th>
+                                                    <th style={{ padding: '0 1.5rem' }}>Date d'inscription</th>
+                                                    <th style={{ padding: '0 1.5rem' }}>Session / Formateur</th>
+                                                    <th style={{ padding: '0 1.5rem', textAlign: 'center' }}>Statut</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {allInscriptions.map(insc => (
+                                                    <tr key={insc.id} className="glass" style={{
+                                                        borderRadius: '16px',
+                                                        background: 'rgba(255,255,255,0.02)',
+                                                        transition: 'all 0.3s ease',
+                                                        verticalAlign: 'middle'
+                                                    }}>
+                                                        <td style={{ padding: '1.2rem 1.5rem', borderRadius: '16px 0 0 16px' }}>
+                                                            <div style={{ fontWeight: '700', fontSize: '1rem', color: '#fff' }}>{insc.individu?.prenom} {insc.individu?.nom}</div>
+                                                            <div style={{ fontSize: '0.8rem', color: 'var(--primary)', opacity: 0.8, fontWeight: '500' }}>{insc.individu?.email}</div>
+                                                        </td>
+                                                        <td style={{ padding: '1.2rem 1.5rem' }}>
+                                                            <span className="training-badge" style={{
+                                                                position: 'static',
+                                                                backgroundColor: 'rgba(34, 211, 238, 0.08)',
+                                                                color: '#22d3ee',
+                                                                padding: '0.4rem 1rem',
+                                                                borderRadius: '2rem',
+                                                                border: '1px solid rgba(34, 211, 238, 0.2)',
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: '700'
+                                                            }}>
+                                                                {insc.formation?.titre}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '1.2rem 1.5rem', fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)', fontWeight: '500' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                <span>📅</span> {new Date(insc.dateInscription).toLocaleDateString()}
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ padding: '1.2rem 1.5rem', minWidth: '240px' }}>
+                                                            <select
+                                                                className="form-control glass"
+                                                                style={{
+                                                                    padding: '0.6rem 1rem',
+                                                                    fontSize: '0.85rem',
+                                                                    background: 'rgba(255,255,255,0.05)',
+                                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                                    color: 'white',
+                                                                    borderRadius: '10px',
+                                                                    width: '100%',
+                                                                    outline: 'none',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                                value={insc.planification?.id || ""}
+                                                                onChange={(e) => {
+                                                                    if (e.target.value) {
+                                                                        InscriptionService.assignPlanning(insc.id, e.target.value)
+                                                                            .then(() => {
+                                                                                setAlertConfig({ title: "Succès", message: "Affectation réussie !", type: 'success' });
+                                                                                loadAllInscriptions();
+                                                                            })
+                                                                            .catch(err => {
+                                                                                setAlertConfig({ title: "Erreur", message: "Échec de l'affectation", type: 'error' });
+                                                                            });
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <option value="" style={{ background: '#0f172a' }}>-- Affecter une session --</option>
+                                                                {plannings
+                                                                    .filter(p => p.formation?.id === insc.formation?.id)
+                                                                    .map(p => (
+                                                                        <option key={p.id} value={p.id} style={{ background: '#0f172a' }}>
+                                                                            {new Date(p.dateDebut).toLocaleDateString()} - {p.formateur?.user?.username}
+                                                                        </option>
+                                                                    ))
+                                                                }
+                                                            </select>
+                                                        </td>
+                                                        <td style={{ padding: '1.2rem 1.5rem', textAlign: 'center', borderRadius: '0 16px 16px 0' }}>
+                                                            <span style={{
+                                                                display: 'inline-block',
+                                                                padding: '0.4rem 0.8rem',
+                                                                borderRadius: '8px',
+                                                                fontSize: '0.7rem',
+                                                                fontWeight: '800',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '0.05em',
+                                                                background: insc.statut === 'CONFIRMEE' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                                                color: insc.statut === 'CONFIRMEE' ? '#10b981' : '#f87171',
+                                                                border: `1px solid ${insc.statut === 'CONFIRMEE' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
+                                                            }}>
+                                                                {insc.statut === 'CONFIRMEE' ? '✓ Confirmée' : '⌛ En attente'}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 )}
                             </div>
@@ -1801,40 +2168,387 @@ const Dashboard = () => {
             {/* Formation Details Modal for Individu */}
             {
                 selectedFormation && (
-                    <div className="modal-overlay" onClick={() => setSelectedFormation(null)}>
-                        <div className="modal-content glass" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px' }}>
-                            <h2 className="text-gradient font-black" style={{ marginBottom: '1.5rem' }}>{selectedFormation.titre}</h2>
-
-                            <div className="detail-section" style={{ marginBottom: '2rem' }}>
-                                <h3 className="font-bold">🎯 Objectifs</h3>
-                                <p className="text-muted">{selectedFormation.objectifs}</p>
-                            </div>
-
-                            <div className="detail-section" style={{ marginBottom: '2rem' }}>
-                                <h3 className="font-bold">📝 Programme</h3>
-                                <div className="programme-content glass" style={{ padding: '1.5rem', whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>
-                                    {selectedFormation.programmeDetaille}
+                    <div className="modal-overlay" onClick={() => setSelectedFormation(null)} style={{ zIndex: 1100 }}>
+                        <div className="modal-content glass fade-in" onClick={e => e.stopPropagation()} style={{
+                            maxWidth: '800px',
+                            width: '90%',
+                            maxHeight: '90vh',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            padding: '0',
+                            overflow: 'hidden',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                        }}>
+                            {/* Modal Header */}
+                            <div style={{
+                                padding: '2.5rem 2.5rem 1.5rem',
+                                background: 'linear-gradient(to bottom, rgba(34, 211, 238, 0.05), transparent)',
+                                borderBottom: '1px solid rgba(255, 255, 255, 0.05)'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                    <h2 className="text-gradient font-black" style={{ fontSize: '2rem', margin: 0, lineHeight: '1.2' }}>
+                                        {selectedFormation.titre}
+                                    </h2>
+                                    <button
+                                        onClick={() => setSelectedFormation(null)}
+                                        style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.5rem', opacity: 0.5 }}
+                                    >✕</button>
                                 </div>
-                            </div>
-
-                            <div className="detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-                                <div className="detail-card glass" style={{ padding: '1rem' }}>
-                                    <span className="text-muted" style={{ display: 'block', fontSize: '0.8rem' }}>📅 Planning</span>
-                                    <span style={{ fontWeight: 600 }}>
-                                        {selectedFormation.dateDebut ? new Date(selectedFormation.dateDebut).toLocaleDateString() : 'N/A'} au {selectedFormation.dateFin ? new Date(selectedFormation.dateFin).toLocaleDateString() : 'N/A'}
+                                <div style={{ marginTop: '1rem', display: 'flex', gap: '0.8rem' }}>
+                                    <span style={{ padding: '0.3rem 0.8rem', background: 'rgba(34, 211, 238, 0.1)', color: '#22d3ee', borderRadius: '2rem', fontSize: '0.7rem', fontWeight: '800', border: '1px solid rgba(34, 211, 238, 0.2)' }}>
+                                        {selectedFormation.categorie || 'FORMATION'}
                                     </span>
                                 </div>
-                                <div className="detail-card glass" style={{ padding: '1rem' }}>
-                                    <span className="text-muted" style={{ display: 'block', fontSize: '0.8rem' }}>🏢 Ville</span>
-                                    <span style={{ fontWeight: 600 }}>{selectedFormation.ville}</span>
+                            </div>
+
+                            {/* Modal Body - Scrollable */}
+                            <div style={{
+                                padding: '2.5rem',
+                                overflowY: 'auto',
+                                flex: 1,
+                                scrollbarWidth: 'thin',
+                                scrollbarColor: 'rgba(34, 211, 238, 0.3) transparent'
+                            }} className="custom-scroll">
+                                <div className="detail-section" style={{ marginBottom: '2.5rem' }}>
+                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                        <span style={{ fontSize: '1.4rem' }}>🎯</span> Objectifs de la formation
+                                    </h3>
+                                    <p style={{ color: 'var(--text-muted)', lineHeight: '1.8', fontSize: '1rem' }}>
+                                        {selectedFormation.objectifs}
+                                    </p>
+                                </div>
+
+                                <div className="detail-section" style={{ marginBottom: '2.5rem' }}>
+                                    <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                        <span style={{ fontSize: '1.4rem' }}>📝</span> Programme détaillé
+                                    </h3>
+                                    <div style={{
+                                        padding: '1.8rem',
+                                        background: 'rgba(255, 255, 255, 0.02)',
+                                        borderRadius: '1.2rem',
+                                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                                        whiteSpace: 'pre-wrap',
+                                        color: 'rgba(255, 255, 255, 0.8)',
+                                        lineHeight: '1.8',
+                                        fontSize: '0.95rem'
+                                    }}>
+                                        {selectedFormation.programmeDetaille}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
+                                    <div style={{ padding: '1.2rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '1rem', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                        <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '700', marginBottom: '0.5rem' }}>📅 PLANNING</span>
+                                        <div style={{ fontWeight: '700', fontSize: '0.9rem' }}>
+                                            {selectedFormation.dateDebut ?
+                                                `${new Date(selectedFormation.dateDebut).toLocaleDateString()} au ${selectedFormation.dateFin ? new Date(selectedFormation.dateFin).toLocaleDateString() : '?'}`
+                                                : 'Date à venir'}
+                                        </div>
+                                    </div>
+                                    <div style={{ padding: '1.2rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '1rem', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                        <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '700', marginBottom: '0.5rem' }}>🏢 VILLE</span>
+                                        <div style={{ fontWeight: '700', fontSize: '0.9rem' }}>{selectedFormation.ville}</div>
+                                    </div>
+                                    <div style={{ padding: '1.2rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '1rem', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                        <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '700', marginBottom: '0.5rem' }}>⏱️ DURÉE</span>
+                                        <div style={{ fontWeight: '700', fontSize: '0.9rem' }}>{selectedFormation.nombreHeures} heures</div>
+                                    </div>
+                                    <div style={{ padding: '1.2rem', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '1rem', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                        <span style={{ display: 'block', fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: '700', marginBottom: '0.5rem' }}>💰 PRIX</span>
+                                        <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#22d3ee' }}>{selectedFormation.cout} MAD</div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setSelectedFormation(null)}>Fermer</button>
+                            {/* Modal Footer */}
+                            <div style={{
+                                padding: '1.5rem 2.5rem',
+                                borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+                                background: 'rgba(255, 255, 255, 0.01)',
+                                display: 'flex',
+                                gap: '1rem'
+                            }}>
+                                <button
+                                    className="btn btn-outline"
+                                    style={{ flex: 1, padding: '1rem' }}
+                                    onClick={() => setSelectedFormation(null)}
+                                >
+                                    Fermer
+                                </button>
+                                {isIndividu && (
+                                    <button
+                                        className={`btn ${myInscriptions.some(ins => ins.formation?.id === selectedFormation.id) ? 'btn-outline' : 'btn-primary'}`}
+                                        style={{
+                                            flex: 1.5,
+                                            padding: '1rem',
+                                            boxShadow: myInscriptions.some(ins => ins.formation?.id === selectedFormation.id) ? 'none' : '0 10px 20px rgba(34, 211, 238, 0.2)'
+                                        }}
+                                        onClick={() => {
+                                            if (myInscriptions.some(ins => ins.formation?.id === selectedFormation.id)) {
+                                                setTrainingToUnenroll(selectedFormation);
+                                            } else {
+                                                setEnrollmentFormation(selectedFormation);
+                                                setEnrollmentData({
+                                                    nom: currentUser.lastName || '',
+                                                    prenom: currentUser.firstName || '',
+                                                    email: currentUser.email || '',
+                                                    telephone: currentUser.phone || '',
+                                                    ville: '',
+                                                    dateNaissance: ''
+                                                });
+                                                setShowEnrollmentForm(true);
+                                            }
+                                        }}
+                                    >
+                                        {myInscriptions.some(ins => ins.formation?.id === selectedFormation.id) ? "✓ Déjà inscrit (Se désinscrire)" : "S'inscrire maintenant"}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )
             }
+            {/* Compact Elevated Enrollment Form Modal */}
+            {showEnrollmentForm && enrollmentFormation && (
+                <div className="modal-overlay fade-in" style={{
+                    zIndex: 2500,
+                    backgroundColor: 'rgba(2, 6, 23, 0.85)',
+                    backdropFilter: 'blur(12px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <div className="modal-content glass fade-in-up" style={{
+                        maxWidth: '520px',
+                        width: '95%',
+                        padding: '0',
+                        overflow: 'hidden',
+                        borderRadius: '1.5rem',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(6, 182, 212, 0.1)'
+                    }}>
+                        {/* Modal Header Wrap */}
+                        <div style={{
+                            padding: '2rem 1.5rem 1.5rem',
+                            textAlign: 'center',
+                            background: 'linear-gradient(to bottom, rgba(6, 182, 212, 0.05), transparent)',
+                            position: 'relative'
+                        }}>
+                            <div style={{
+                                width: '56px',
+                                height: '56px',
+                                background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(99, 102, 241, 0.2))',
+                                borderRadius: '1rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                margin: '0 auto 1.2rem',
+                                fontSize: '1.8rem',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                boxShadow: '0 0 20px rgba(6, 182, 212, 0.2)'
+                            }}>
+                                📝
+                            </div>
+                            <h2 className="text-gradient font-black" style={{ fontSize: '1.8rem', marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
+                                {t('inscription_title') || "Inscription"}
+                            </h2>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: '500' }}>
+                                {enrollmentFormation.titre}
+                            </p>
+
+                            <button
+                                onClick={() => setShowEnrollmentForm(false)}
+                                style={{
+                                    position: 'absolute', top: '1.2rem', right: '1.2rem',
+                                    background: 'rgba(255,255,255,0.05)', border: 'none',
+                                    borderRadius: '50%', width: '28px', height: '28px',
+                                    color: 'white', cursor: 'pointer', transition: 'var(--transition)'
+                                }}
+                            >×</button>
+                        </div>
+
+                        <form
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                InscriptionService.registerToFormation(enrollmentFormation.id, enrollmentData)
+                                    .then(() => {
+                                        setShowEnrollmentForm(false);
+                                        setSelectedFormation(null);
+                                        loadMyInscriptions();
+                                        setAlertConfig({
+                                            title: "Succès !",
+                                            message: "Votre demande d'inscription a été envoyée.",
+                                            type: 'success'
+                                        });
+                                    })
+                                    .catch(err => {
+                                        const msg = err.response?.data?.message || err.response?.data || "Erreur lors de l'inscription";
+                                        setAlertConfig({ title: "Échec", message: msg, type: 'error' });
+                                    });
+                            }}
+                            style={{ padding: '0 1.5rem 2rem' }}
+                        >
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group-custom">
+                                    <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Nom</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '0.8rem', padding: '0.7rem 1rem', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.9rem' }}
+                                        required
+                                        value={enrollmentData.nom}
+                                        onChange={e => setEnrollmentData({ ...enrollmentData, nom: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-group-custom">
+                                    <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Prénom</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '0.8rem', padding: '0.7rem 1rem', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.9rem' }}
+                                        required
+                                        value={enrollmentData.prenom}
+                                        onChange={e => setEnrollmentData({ ...enrollmentData, prenom: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group-custom" style={{ marginTop: '1rem' }}>
+                                <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Email Professionnelle</label>
+                                <input
+                                    type="email"
+                                    className="input-field"
+                                    style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '0.8rem', padding: '0.7rem 1rem', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.9rem' }}
+                                    required
+                                    value={enrollmentData.email}
+                                    onChange={e => setEnrollmentData({ ...enrollmentData, email: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                                <div className="form-group-custom">
+                                    <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Naissance</label>
+                                    <input
+                                        type="date"
+                                        className="input-field"
+                                        style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '0.8rem', padding: '0.78rem 1rem', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.9rem' }}
+                                        required
+                                        value={enrollmentData.dateNaissance}
+                                        onChange={e => setEnrollmentData({ ...enrollmentData, dateNaissance: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-group-custom">
+                                    <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Téléphone</label>
+                                    <input
+                                        type="tel"
+                                        className="input-field"
+                                        style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '0.8rem', padding: '0.7rem 1rem', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.9rem' }}
+                                        required
+                                        value={enrollmentData.telephone}
+                                        onChange={e => setEnrollmentData({ ...enrollmentData, telephone: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group-custom" style={{ marginTop: '1rem' }}>
+                                <label style={{ fontSize: '0.7rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.4rem', textTransform: 'uppercase' }}>Ville</label>
+                                <input
+                                    type="text"
+                                    className="input-field"
+                                    style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '0.8rem', padding: '0.7rem 1rem', border: '1px solid rgba(255,255,255,0.05)', fontSize: '0.9rem' }}
+                                    required
+                                    value={enrollmentData.ville}
+                                    onChange={e => setEnrollmentData({ ...enrollmentData, ville: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                                <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '0.7rem', borderRadius: '0.8rem', fontSize: '0.85rem' }} onClick={() => setShowEnrollmentForm(false)}>
+                                    Annuler
+                                </button>
+                                <button type="submit" className="btn btn-primary" style={{ flex: 1.5, padding: '0.7rem', borderRadius: '0.8rem', fontSize: '0.85rem' }}>
+                                    Confirmer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Unenrollment Confirmation Modal */}
+            {trainingToUnenroll && (
+                <div className="modal-overlay fade-in" style={{ backgroundColor: 'rgba(6, 9, 19, 0.95)', zIndex: 2000 }}>
+                    <div className="modal-content glass" style={{ maxWidth: '450px', padding: '2.5rem', textAlign: 'center' }}>
+                        <div style={{ fontSize: '3.5rem', marginBottom: '1.5rem', filter: 'drop-shadow(0 0 15px rgba(239, 68, 68, 0.4))' }}>⚠️</div>
+                        <h2 className="font-black" style={{ fontSize: '1.6rem', marginBottom: '1rem', color: '#ef4444' }}>{t('confirm_unenroll_title')}</h2>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '2.5rem' }}>
+                            {t('confirm_unenroll')} <br /><strong>{trainingToUnenroll.titre}</strong>
+                        </p>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setTrainingToUnenroll(null)}>
+                                {t('keep_enrolled')}
+                            </button>
+                            <button
+                                className="btn btn-primary"
+                                style={{ flex: 1.2, background: '#ef4444', boxShadow: '0 8px 16px rgba(239, 68, 68, 0.2)' }}
+                                onClick={() => {
+                                    InscriptionService.unregisterFromFormation(trainingToUnenroll.id)
+                                        .then(() => {
+                                            loadMyInscriptions();
+                                            setTrainingToUnenroll(null);
+                                            setSelectedFormation(null);
+                                            setAlertConfig({
+                                                title: "Réussi",
+                                                message: "Vous avez été désinscrit avec succès.",
+                                                type: 'success'
+                                            });
+                                        })
+                                        .catch(err => {
+                                            setAlertConfig({ title: "Erreur", message: "Échec de la désinscription", type: 'error' });
+                                        });
+                                }}
+                            >
+                                {t('unenroll_btn')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Premium Alert Modal */}
+            {alertConfig && (
+                <div className="modal-overlay fade-in" style={{ backgroundColor: 'rgba(6, 9, 19, 0.95)', zIndex: 9999 }}>
+                    <div className="modal-content glass" style={{ maxWidth: '450px', padding: '2.5rem', textAlign: 'center' }}>
+                        <div style={{
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '50%',
+                            background: alertConfig.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '2.5rem',
+                            margin: '0 auto 1.5rem',
+                            border: `2px solid ${alertConfig.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+                        }}>
+                            {alertConfig.type === 'success' ? '✓' : '⚠'}
+                        </div>
+                        <h2 className="font-black" style={{ marginBottom: '1rem', color: alertConfig.type === 'success' ? '#10b981' : '#ef4444' }}>
+                            {alertConfig.title}
+                        </h2>
+                        <p className="text-muted" style={{ marginBottom: '2rem', lineHeight: '1.6' }}>
+                            {alertConfig.message}
+                        </p>
+                        <button
+                            className="btn btn-primary"
+                            style={{ width: '100%', borderRadius: '1rem' }}
+                            onClick={() => setAlertConfig(null)}
+                        >
+                            Compris
+                        </button>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

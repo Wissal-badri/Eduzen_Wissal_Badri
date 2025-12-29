@@ -1,21 +1,27 @@
 package com.eduzen.management.controller;
 
+import com.eduzen.management.model.Individu;
 import com.eduzen.management.model.Inscription;
 import com.eduzen.management.model.Notification;
 import com.eduzen.management.model.User;
 import com.eduzen.management.repository.FormationRepository;
+import com.eduzen.management.repository.IndividuRepository;
 import com.eduzen.management.repository.InscriptionRepository;
 import com.eduzen.management.repository.NotificationRepository;
+import com.eduzen.management.repository.PlanningRepository;
 import com.eduzen.management.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import com.eduzen.management.model.Planning;
 
 @RestController
 @RequestMapping("/api/inscriptions")
@@ -25,20 +31,37 @@ public class InscriptionController {
     private final UserRepository userRepository;
     private final FormationRepository formationRepository;
     private final NotificationRepository notificationRepository;
+    private final IndividuRepository individuRepository;
+    private final PlanningRepository planningRepository;
 
     public InscriptionController(InscriptionRepository inscriptionRepository,
             UserRepository userRepository,
             FormationRepository formationRepository,
-            NotificationRepository notificationRepository) {
+            NotificationRepository notificationRepository,
+            IndividuRepository individuRepository,
+            PlanningRepository planningRepository) {
         this.inscriptionRepository = inscriptionRepository;
         this.userRepository = userRepository;
         this.formationRepository = formationRepository;
         this.notificationRepository = notificationRepository;
+        this.individuRepository = individuRepository;
+        this.planningRepository = planningRepository;
+    }
+
+    public static class RegistrationRequest {
+        public String nom;
+        public String prenom;
+        public String email;
+        public String telephone;
+        public String ville;
+        public String dateNaissance; // String to be parsed to LocalDate
     }
 
     @PostMapping("/formation/{formationId}")
-    @PreAuthorize("hasRole('INDIVIDU')")
-    public ResponseEntity<?> register(Authentication authentication, @PathVariable Long formationId) {
+    @PreAuthorize("hasAnyRole('INDIVIDU', 'ROLE_INDIVIDU')")
+    public ResponseEntity<?> register(Authentication authentication,
+            @PathVariable Long formationId,
+            @RequestBody(required = false) RegistrationRequest request) {
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -47,9 +70,43 @@ public class InscriptionController {
         }
 
         return formationRepository.findById(formationId).map(formation -> {
+            // Find or update/create Individu record for this user
+            Individu individu = individuRepository.findAll().stream()
+                    .filter(i -> i.getEmail().equalsIgnoreCase(user.getEmail()))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        Individu newInd = new Individu();
+                        newInd.setEmail(user.getEmail());
+                        return newInd;
+                    });
+
+            // Update details from request if provided, otherwise from user profile
+            if (request != null) {
+                individu.setNom(request.nom != null ? request.nom : user.getLastName());
+                individu.setPrenom(request.prenom != null ? request.prenom : user.getFirstName());
+                individu.setEmail(request.email != null ? request.email : user.getEmail());
+                individu.setTelephone(request.telephone != null ? request.telephone : user.getPhone());
+                individu.setVille(request.ville != null ? request.ville : "");
+                if (request.dateNaissance != null && !request.dateNaissance.isEmpty()) {
+                    try {
+                        individu.setDateNaissance(java.time.LocalDate.parse(request.dateNaissance));
+                    } catch (Exception e) {
+                        // Keep current if parse fails
+                    }
+                }
+            } else {
+                individu.setNom(user.getLastName());
+                individu.setPrenom(user.getFirstName());
+                individu.setTelephone(user.getPhone());
+                individu.setVille("");
+            }
+
+            individu = individuRepository.save(individu);
+
             Inscription inscription = new Inscription();
             inscription.setUser(user);
             inscription.setFormation(formation);
+            inscription.setIndividu(individu);
             inscription.setStatut("EN_ATTENTE");
             inscription.setDateInscription(LocalDateTime.now());
 
@@ -57,7 +114,7 @@ public class InscriptionController {
 
             // Create notification for Admin/Assistant
             Notification notification = new Notification();
-            notification.setMessage("Nouvelle inscription : " + user.getFirstName() + " " + user.getLastName() +
+            notification.setMessage("Nouvelle inscription : " + individu.getPrenom() + " " + individu.getNom() +
                     " pour " + formation.getTitre());
             notification.setFormationId(formationId);
             notification.setType("INSCRIPTION");
@@ -68,11 +125,84 @@ public class InscriptionController {
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasRole('INDIVIDU')")
+    @PreAuthorize("hasAnyRole('INDIVIDU', 'ROLE_INDIVIDU')")
     public List<Inscription> getMyInscriptions(Authentication authentication) {
         User user = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return inscriptionRepository.findByUser(user);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
+    public List<Inscription> getAllInscriptions() {
+        return inscriptionRepository.findAll();
+    }
+
+    @PutMapping("/{id}/assign-planning")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
+    public ResponseEntity<?> assignPlanning(@PathVariable Long id, @RequestParam Long planningId) {
+        System.out.println("DEBUG: Assigning Planning " + planningId + " to Inscription " + id);
+        try {
+            // Find Inscription
+            Optional<Inscription> optInsc = inscriptionRepository.findById(id);
+            if (optInsc.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("error", "Inscription non trouvée."));
+            }
+            Inscription inscription = optInsc.get();
+
+            // Find Planning
+            Optional<Planning> optPlanning = planningRepository.findById(planningId);
+            if (optPlanning.isEmpty()) {
+                return ResponseEntity.status(404).body(Map.of("error", "Planning non trouvé."));
+            }
+            Planning planning = optPlanning.get();
+
+            // Check if formation matches
+            if (inscription.getFormation() != null && planning.getFormation() != null) {
+                if (!inscription.getFormation().getId().equals(planning.getFormation().getId())) {
+                    System.out.println("DEBUG: Formation mismatch! Insc: " + inscription.getFormation().getId()
+                            + " vs Planning: " + planning.getFormation().getId());
+                    // We allow it but log it
+                }
+            }
+
+            // Update
+            inscription.setPlanification(planning);
+            inscription.setStatut("CONFIRMEE");
+
+            System.out.println("DEBUG: Attempting to save...");
+            inscriptionRepository.save(inscription);
+            System.out.println("DEBUG: Saved successfully!");
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Affectation réussie");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            System.out.println("DEBUG: CRITICAL ERROR: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("type", e.getClass().getName());
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+
+    @DeleteMapping("/formation/{formationId}")
+    @PreAuthorize("hasAnyRole('INDIVIDU', 'ROLE_INDIVIDU')")
+    public ResponseEntity<?> unregister(Authentication authentication, @PathVariable Long formationId) {
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return inscriptionRepository.findAll().stream()
+                .filter(ins -> ins.getUser().getId().equals(user.getId())
+                        && ins.getFormation().getId().equals(formationId))
+                .findFirst()
+                .map(inscription -> {
+                    inscriptionRepository.delete(inscription);
+                    return ResponseEntity.ok().build();
+                }).orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/stats")
@@ -81,6 +211,7 @@ public class InscriptionController {
         Map<String, Object> stats = new HashMap<>();
         long totalInscriptions = inscriptionRepository.count();
         stats.put("totalInscriptions", totalInscriptions);
+        stats.put("totalIndividus", individuRepository.count());
 
         // Count by formation could be added here
         return ResponseEntity.ok(stats);

@@ -6,8 +6,6 @@ import "./index.css";
 import AuthService from "./services/auth.service";
 import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
-import Home from "./components/Home";
-
 function App() {
   const [currentUser, setCurrentUser] = useState(() => AuthService.getCurrentUser());
 
@@ -39,7 +37,6 @@ function App() {
           <Route path="/login" element={currentUser ? <Navigate to="/dashboard" /> : <Login />} />
           <Route path="/dashboard" element={currentUser ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="/catalogue" element={<Home />} />
           <Route path="/profile" element={<Navigate to="/dashboard" />} />
           <Route path="/home" element={<Navigate to="/login" />} />
         </Routes>

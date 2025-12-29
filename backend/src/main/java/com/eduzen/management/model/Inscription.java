@@ -25,6 +25,14 @@ public class Inscription {
     @JoinColumn(name = "formation_id", nullable = false)
     private Formation formation;
 
+    @ManyToOne
+    @JoinColumn(name = "individu_id")
+    private Individu individu;
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "planification_id", nullable = true)
+    private Planning planification;
+
     private String statut = "EN_ATTENTE"; // EN_ATTENTE, CONFIRMEE, ANNULEE
 
     @Column(name = "date_inscription")

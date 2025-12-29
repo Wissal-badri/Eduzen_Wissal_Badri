@@ -57,6 +57,11 @@ public class AuthController {
         response.put("username", user.getUsername());
         response.put("role", user.getRole().getName());
         response.put("email", user.getEmail());
+        response.put("firstName", user.getFirstName());
+        response.put("lastName", user.getLastName());
+        response.put("phone", user.getPhone());
+        response.put("entreprise", user.getEntreprise());
+        response.put("profileCompleted", user.getProfileCompleted() != null ? user.getProfileCompleted() : false);
         response.put("lastPasswordChange", user.getLastPasswordChange());
         response.put("emailAlerts", user.getEmailAlerts() != null ? user.getEmailAlerts() : true);
         response.put("newsletters", user.getNewsletters() != null ? user.getNewsletters() : false);

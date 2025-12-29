@@ -49,6 +49,9 @@ public class FormationController {
             formation.setVille(formationDetails.getVille());
             formation.setFormateur(formationDetails.getFormateur());
             formation.setPourIndividus(formationDetails.getPourIndividus());
+            formation.setStatut(formationDetails.getStatut());
+            formation.setDateDebut(formationDetails.getDateDebut());
+            formation.setDateFin(formationDetails.getDateFin());
             return ResponseEntity.ok(formationRepository.save(formation));
         }).orElse(ResponseEntity.notFound().build());
     }
