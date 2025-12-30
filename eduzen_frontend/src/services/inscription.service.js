@@ -23,6 +23,10 @@ const assignPlanning = (inscriptionId, planningId) => {
     return axios.put(`${API_URL}/${inscriptionId}/assign-planning?planningId=${planningId}`, {}, { headers: authHeader() });
 };
 
+const updateStatus = (inscriptionId, status) => {
+    return axios.put(`${API_URL}/${inscriptionId}/status?status=${status}`, {}, { headers: authHeader() });
+};
+
 const unregisterFromFormation = (formationId) => {
     return axios.delete(`${API_URL}/formation/${formationId}`, { headers: authHeader() });
 };
@@ -33,6 +37,7 @@ const InscriptionService = {
     getMyInscriptions,
     getAllInscriptions,
     assignPlanning,
+    updateStatus,
     getStats
 };
 

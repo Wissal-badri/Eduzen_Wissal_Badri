@@ -240,6 +240,8 @@ const Dashboard = () => {
         dateNaissance: ''
     });
     const [trainingToUnenroll, setTrainingToUnenroll] = useState(null);
+    const [showStatusModal, setShowStatusModal] = useState(false);
+    const [selectedInscToEdit, setSelectedInscToEdit] = useState(null);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -413,8 +415,6 @@ const Dashboard = () => {
             loadMemos();
             if (isAdmin || isAssistant) {
                 loadFormateurs();
-            }
-            if (isAdmin || isAssistant) {
                 loadEntreprises();
                 loadIndividus();
                 loadStats();
@@ -430,6 +430,13 @@ const Dashboard = () => {
             }
         }
     }, [currentUser?.id, isAdmin, isAssistant, isIndividu]);
+
+    useEffect(() => {
+        if (activeTab === 'inscriptions' && (isAdmin || isAssistant)) {
+            loadAllInscriptions();
+            loadPlannings();
+        }
+    }, [activeTab, isAdmin, isAssistant]);
 
     const loadMyInscriptions = () => {
         InscriptionService.getMyInscriptions().then(res => setMyInscriptions(res.data));
@@ -987,7 +994,7 @@ const Dashboard = () => {
                                                 </div>
                                             </div>
                                             <div style={{ marginTop: '0.6rem' }}>
-                                                <span className="stat-value" style={{ fontSize: '0.8rem', fontWeight: '800', color: 'var(--text)', wordBreak: 'break-all', opacity: 0.9 }}>{currentUser.email}</span>
+                                                <span className="stat-value" style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text)', wordBreak: 'break-all', opacity: 1 }}>{currentUser.email}</span>
                                                 <p style={{ margin: '0.2rem 0 0', fontSize: '0.65rem', color: 'var(--primary)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Actif</p>
                                             </div>
                                         </div>
@@ -1834,7 +1841,7 @@ const Dashboard = () => {
                                                     <th style={{ padding: '0 1.5rem' }}>Individu</th>
                                                     <th style={{ padding: '0 1.5rem' }}>Formation Voulue</th>
                                                     <th style={{ padding: '0 1.5rem' }}>Date d'inscription</th>
-                                                    <th style={{ padding: '0 1.5rem' }}>Session / Formateur</th>
+                                                    <th style={{ padding: '0 1.5rem' }}>Formateur</th>
                                                     <th style={{ padding: '0 1.5rem', textAlign: 'center' }}>Statut</th>
                                                 </tr>
                                             </thead>
@@ -1869,60 +1876,63 @@ const Dashboard = () => {
                                                                 <span>📅</span> {new Date(insc.dateInscription).toLocaleDateString()}
                                                             </div>
                                                         </td>
-                                                        <td style={{ padding: '1.2rem 1.5rem', minWidth: '240px' }}>
-                                                            <select
-                                                                className="form-control glass"
-                                                                style={{
-                                                                    padding: '0.6rem 1rem',
-                                                                    fontSize: '0.85rem',
-                                                                    background: 'rgba(255,255,255,0.05)',
-                                                                    border: '1px solid rgba(255,255,255,0.1)',
-                                                                    color: 'white',
-                                                                    borderRadius: '10px',
-                                                                    width: '100%',
-                                                                    outline: 'none',
-                                                                    cursor: 'pointer'
-                                                                }}
-                                                                value={insc.planification?.id || ""}
-                                                                onChange={(e) => {
-                                                                    if (e.target.value) {
-                                                                        InscriptionService.assignPlanning(insc.id, e.target.value)
-                                                                            .then(() => {
-                                                                                setAlertConfig({ title: "Succès", message: "Affectation réussie !", type: 'success' });
-                                                                                loadAllInscriptions();
-                                                                            })
-                                                                            .catch(err => {
-                                                                                setAlertConfig({ title: "Erreur", message: "Échec de l'affectation", type: 'error' });
-                                                                            });
-                                                                    }
-                                                                }}
-                                                            >
-                                                                <option value="" style={{ background: '#0f172a' }}>-- Affecter une session --</option>
-                                                                {plannings
-                                                                    .filter(p => p.formation?.id === insc.formation?.id)
-                                                                    .map(p => (
-                                                                        <option key={p.id} value={p.id} style={{ background: '#0f172a' }}>
-                                                                            {new Date(p.dateDebut).toLocaleDateString()} - {p.formateur?.user?.username}
-                                                                        </option>
-                                                                    ))
-                                                                }
-                                                            </select>
+                                                        <td style={{ padding: '1.2rem 1.5rem', minWidth: '200px' }}>
+                                                            {(() => {
+                                                                const fId = insc.formation?.id || insc.formation;
+                                                                const fDetail = trainings && trainings.length > 0 ? trainings.find(f => String(f.id) === String(fId)) : null;
+
+                                                                const fName = fDetail?.formateur?.user?.firstName
+                                                                    ? `${fDetail.formateur.user.firstName} ${fDetail.formateur.user.lastName}`
+                                                                    : (fDetail?.formateur?.user?.username || 'Non assigné');
+                                                                const fInitial = (fDetail?.formateur?.user?.firstName?.[0] || fDetail?.formateur?.user?.username?.[0] || 'F').toUpperCase();
+
+                                                                return (
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                                                        <div style={{
+                                                                            width: '32px',
+                                                                            height: '32px',
+                                                                            borderRadius: '50%',
+                                                                            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'center',
+                                                                            fontSize: '0.8rem',
+                                                                            fontWeight: 'bold',
+                                                                            border: '1px solid rgba(255,255,255,0.1)',
+                                                                            boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                                                        }}>
+                                                                            {fInitial}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#fff' }}>
+                                                                                {fName}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </td>
                                                         <td style={{ padding: '1.2rem 1.5rem', textAlign: 'center', borderRadius: '0 16px 16px 0' }}>
-                                                            <span style={{
-                                                                display: 'inline-block',
-                                                                padding: '0.4rem 0.8rem',
-                                                                borderRadius: '8px',
-                                                                fontSize: '0.7rem',
-                                                                fontWeight: '800',
-                                                                textTransform: 'uppercase',
-                                                                letterSpacing: '0.05em',
-                                                                background: insc.statut === 'CONFIRMEE' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                                                                color: insc.statut === 'CONFIRMEE' ? '#10b981' : '#f87171',
-                                                                border: `1px solid ${insc.statut === 'CONFIRMEE' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`
-                                                            }}>
-                                                                {insc.statut === 'CONFIRMEE' ? '✓ Confirmée' : '⌛ En attente'}
-                                                            </span>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.8rem' }}>
+                                                                <span style={{
+                                                                    display: 'inline-block',
+                                                                    padding: '0.4rem 0.8rem',
+                                                                    borderRadius: '8px',
+                                                                    fontSize: '0.7rem',
+                                                                    fontWeight: '800',
+                                                                    textTransform: 'uppercase',
+                                                                    letterSpacing: '0.05em',
+                                                                    background: insc.statut === 'CONFIRMEE' ? 'rgba(16, 185, 129, 0.15)' : (insc.statut === 'BLOQUEE' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 211, 238, 0.15)'),
+                                                                    color: insc.statut === 'CONFIRMEE' ? '#10b981' : (insc.statut === 'BLOQUEE' ? '#f87171' : '#22d3ee'),
+                                                                    border: `1px solid ${insc.statut === 'CONFIRMEE' ? 'rgba(16, 185, 129, 0.2)' : (insc.statut === 'BLOQUEE' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 211, 238, 0.2)')}`
+                                                                }}>
+                                                                    {insc.statut === 'CONFIRMEE' ? '✓ Autorisé' : (insc.statut === 'BLOQUEE' ? '🚫 Bloqué' : '⌛ Inscrit')}
+                                                                </span>
+                                                                <button className="btn-icon edit" title="Editer le statut" style={{ width: '32px', height: '32px' }} onClick={() => {
+                                                                    setSelectedInscToEdit(insc);
+                                                                    setShowStatusModal(true);
+                                                                }}>✏️</button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -2546,6 +2556,67 @@ const Dashboard = () => {
                         >
                             Compris
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Status Edit Modal */}
+            {showStatusModal && selectedInscToEdit && (
+                <div className="modal-overlay fade-in" style={{ backgroundColor: 'rgba(6, 9, 19, 0.95)', zIndex: 9000 }}>
+                    <div className="modal-content glass" style={{ maxWidth: '450px', padding: '2.5rem', textAlign: 'center' }}>
+                        <div style={{
+                            width: '80px',
+                            height: '80px',
+                            borderRadius: '50%',
+                            background: 'rgba(6, 182, 212, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '2.5rem',
+                            margin: '0 auto 1.5rem',
+                            border: '2px solid rgba(6, 182, 212, 0.3)'
+                        }}>
+                            👤
+                        </div>
+                        <h2 className="font-black" style={{ marginBottom: '1rem' }}>Gérer l'accès</h2>
+                        <p className="text-muted" style={{ marginBottom: '2rem', lineHeight: '1.6' }}>
+                            Modifier les droits de <strong>{selectedInscToEdit.individu?.prenom} {selectedInscToEdit.individu?.nom}</strong> pour la formation <strong>{selectedInscToEdit.formation?.titre}</strong>.
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <button
+                                className="btn btn-primary"
+                                style={{ background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                                onClick={() => {
+                                    InscriptionService.updateStatus(selectedInscToEdit.id, 'CONFIRMEE').then(() => {
+                                        loadAllInscriptions();
+                                        setShowStatusModal(false);
+                                        setAlertConfig({ title: "Succès", message: "Individu autorisé avec succès", type: 'success' });
+                                    });
+                                }}
+                            >
+                                <span>✓</span> Autoriser l'individu
+                            </button>
+                            <button
+                                className="btn btn-primary"
+                                style={{ background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                                onClick={() => {
+                                    InscriptionService.updateStatus(selectedInscToEdit.id, 'BLOQUEE').then(() => {
+                                        loadAllInscriptions();
+                                        setShowStatusModal(false);
+                                        setAlertConfig({ title: "Bloqué", message: "Individu bloqué pour cette formation", type: 'error' });
+                                    });
+                                }}
+                            >
+                                <span>🚫</span> Bloquer complètement
+                            </button>
+                            <button
+                                className="btn btn-outline"
+                                style={{ marginTop: '1rem' }}
+                                onClick={() => setShowStatusModal(false)}
+                            >
+                                Annuler
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

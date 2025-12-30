@@ -4,6 +4,7 @@ import com.eduzen.management.model.Individu;
 import com.eduzen.management.model.Inscription;
 import com.eduzen.management.model.Notification;
 import com.eduzen.management.model.User;
+import com.eduzen.management.model.Planning;
 import com.eduzen.management.repository.FormationRepository;
 import com.eduzen.management.repository.IndividuRepository;
 import com.eduzen.management.repository.InscriptionRepository;
@@ -13,14 +14,13 @@ import com.eduzen.management.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import com.eduzen.management.model.Planning;
 
 @RestController
 @RequestMapping("/api/inscriptions")
@@ -137,39 +137,34 @@ public class InscriptionController {
         return inscriptionRepository.findAll();
     }
 
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
+    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam String status) {
+        return inscriptionRepository.findById(id).map(inscription -> {
+            inscription.setStatut(status);
+            inscriptionRepository.save(inscription);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Statut mis à jour");
+            return ResponseEntity.ok(response);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     @PutMapping("/{id}/assign-planning")
     @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
+    @Transactional
     public ResponseEntity<?> assignPlanning(@PathVariable Long id, @RequestParam Long planningId) {
         System.out.println("DEBUG: Assigning Planning " + planningId + " to Inscription " + id);
         try {
-            // Find Inscription
-            Optional<Inscription> optInsc = inscriptionRepository.findById(id);
-            if (optInsc.isEmpty()) {
-                return ResponseEntity.status(404).body(Map.of("error", "Inscription non trouvée."));
-            }
-            Inscription inscription = optInsc.get();
+            Inscription inscription = inscriptionRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Inscription non trouvée."));
 
-            // Find Planning
-            Optional<Planning> optPlanning = planningRepository.findById(planningId);
-            if (optPlanning.isEmpty()) {
-                return ResponseEntity.status(404).body(Map.of("error", "Planning non trouvé."));
-            }
-            Planning planning = optPlanning.get();
+            Planning planning = planningRepository.findById(planningId)
+                    .orElseThrow(() -> new RuntimeException("Planning non trouvé."));
 
-            // Check if formation matches
-            if (inscription.getFormation() != null && planning.getFormation() != null) {
-                if (!inscription.getFormation().getId().equals(planning.getFormation().getId())) {
-                    System.out.println("DEBUG: Formation mismatch! Insc: " + inscription.getFormation().getId()
-                            + " vs Planning: " + planning.getFormation().getId());
-                    // We allow it but log it
-                }
-            }
-
-            // Update
             inscription.setPlanification(planning);
             inscription.setStatut("CONFIRMEE");
 
-            System.out.println("DEBUG: Attempting to save...");
             inscriptionRepository.save(inscription);
             System.out.println("DEBUG: Saved successfully!");
 
@@ -179,11 +174,10 @@ public class InscriptionController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            System.out.println("DEBUG: CRITICAL ERROR: " + e.getMessage());
+            System.out.println("DEBUG: ERROR in assignPlanning: " + e.getMessage());
             e.printStackTrace();
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", e.getMessage());
-            errorResponse.put("type", e.getClass().getName());
             return ResponseEntity.status(500).body(errorResponse);
         }
     }
