@@ -9,6 +9,8 @@ import EntrepriseService from "../services/entreprise.service";
 import EntrepriseForm from "./admin/EntrepriseForm";
 import CalendarView from "./CalendarView";
 import IndividuService from "../services/individu.service";
+import RessourceViewer from "./individu/RessourceViewer";
+import EvaluationModal from "./individu/EvaluationModal";
 import InscriptionService from "../services/inscription.service";
 import NotificationService from "../services/notification.service";
 import PlanningService from "../services/planning.service";
@@ -17,7 +19,6 @@ import authHeader from "../services/auth-header";
 import ProfileCompletion from "./ProfileCompletion";
 import PasswordManagement from "./admin/PasswordManagement";
 import RessourceManagement from "./formateur/RessourceManagement";
-import RessourceViewer from "./individu/RessourceViewer";
 
 const translations = {
     fr: {
@@ -200,6 +201,8 @@ const Dashboard = () => {
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [stats, setStats] = useState({ totalInscriptions: 0, totalIndividus: 0 });
     const [lang, setLang] = useState(localStorage.getItem("lang") || "fr");
+    const [showResourcesModal, setShowResourcesModal] = useState(null);
+    const [showEvaluationModal, setShowEvaluationModal] = useState(null);
     const [isLangModalOpen, setIsLangModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [passwordData, setPasswordData] = useState({
@@ -245,7 +248,7 @@ const Dashboard = () => {
     const [trainingToUnenroll, setTrainingToUnenroll] = useState(null);
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [selectedInscToEdit, setSelectedInscToEdit] = useState(null);
-    const [showResourcesModal, setShowResourcesModal] = useState(null);
+
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -658,6 +661,12 @@ const Dashboard = () => {
                             >
                                 <span className="icon">🎓</span> Mes Formations
                             </button>
+                            <button
+                                className={`nav-item ${activeTab === 'evaluations' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('evaluations')}
+                            >
+                                <span className="icon">⭐</span> Évaluations
+                            </button>
                         </>
                     )}
                     <button
@@ -986,8 +995,56 @@ const Dashboard = () => {
                                             </div>
                                         </div>
 
-                                        <button className="btn btn-primary" style={{ width: '100%', borderRadius: '1rem', background: 'linear-gradient(135deg, #10b981, #059669)' }} onClick={() => setShowResourcesModal(i.formation)}>
-                                            📚 Accéder aux ressources
+                                        <div style={{ display: 'flex', gap: '0.8rem' }}>
+                                            <button className="btn btn-primary" style={{ flex: 2, borderRadius: '1rem', background: 'linear-gradient(135deg, #10b981, #059669)' }} onClick={() => setShowResourcesModal(i.formation)}>
+                                                📚 Ressources
+                                            </button>
+                                            <button className="btn btn-primary" style={{ flex: 1, borderRadius: '1rem', background: 'linear-gradient(135deg, #f59e0b, #d97706)', padding: '0.5rem' }} onClick={() => setShowEvaluationModal(i.formation)}>
+                                                ⭐ Évaluer
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
+                )}
+
+                {isIndividu && activeTab === 'evaluations' && (
+                    <section className="fade-in">
+                        <header className="content-title">
+                            <h1 className="text-gradient font-black">Évaluations à réaliser</h1>
+                            <p className="text-muted">Partagez votre avis sur les formations que vous avez suivies</p>
+                        </header>
+
+                        {myInscriptions.length === 0 ? (
+                            <div className="glass card text-center" style={{ padding: '6rem 2rem' }}>
+                                <div style={{ fontSize: '3rem', marginBottom: '1.5rem' }}>⭐</div>
+                                <h3 className="font-black" style={{ fontSize: '1.6rem', marginBottom: '1rem' }}>Aucune évaluation possible</h3>
+                                <p className="text-muted">Inscrivez-vous à une formation pour pouvoir l'évaluer ensuite.</p>
+                            </div>
+                        ) : (
+                            <div className="trainings-grid">
+                                {myInscriptions.map(i => (
+                                    <div key={i.id} className="training-card glass fade-in" style={{
+                                        padding: '1.5rem',
+                                        border: '1px solid rgba(245, 158, 11, 0.2)',
+                                        background: 'rgba(245, 158, 11, 0.05)'
+                                    }}>
+                                        <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '1rem' }}>{i.formation?.titre}</h3>
+                                        <p style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: '1.5rem' }}>
+                                            Donnez votre avis sur la qualité pédagogique, le rythme et le support de cette formation.
+                                        </p>
+                                        <button
+                                            className="btn btn-primary"
+                                            style={{
+                                                width: '100%',
+                                                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                                boxShadow: '0 8px 16px rgba(245, 158, 11, 0.2)'
+                                            }}
+                                            onClick={() => setShowEvaluationModal(i.formation)}
+                                        >
+                                            ⭐ Évaluer maintenant
                                         </button>
                                     </div>
                                 ))}
@@ -2562,21 +2619,38 @@ const Dashboard = () => {
 
                                 {/* Show Resources button for enrolled individus */}
                                 {isIndividu && myInscriptions.some(ins => ins.formation?.id === selectedFormation.id) && (
-                                    <button
-                                        className="btn btn-primary"
-                                        style={{
-                                            flex: 1,
-                                            padding: '1rem',
-                                            minWidth: '150px',
-                                            background: 'linear-gradient(135deg, #10b981, #059669)',
-                                            boxShadow: '0 10px 20px rgba(16, 185, 129, 0.2)'
-                                        }}
-                                        onClick={() => {
-                                            setShowResourcesModal(selectedFormation);
-                                        }}
-                                    >
-                                        📚 Voir les ressources
-                                    </button>
+                                    <>
+                                        <button
+                                            className="btn btn-primary"
+                                            style={{
+                                                flex: 1,
+                                                padding: '1rem',
+                                                minWidth: '150px',
+                                                background: 'linear-gradient(135deg, #10b981, #059669)',
+                                                boxShadow: '0 10px 20px rgba(16, 185, 129, 0.2)'
+                                            }}
+                                            onClick={() => {
+                                                setShowResourcesModal(selectedFormation);
+                                            }}
+                                        >
+                                            📚 Voir les ressources
+                                        </button>
+                                        <button
+                                            className="btn btn-primary"
+                                            style={{
+                                                flex: 1,
+                                                padding: '1rem',
+                                                minWidth: '150px',
+                                                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                                boxShadow: '0 10px 20px rgba(245, 158, 11, 0.2)'
+                                            }}
+                                            onClick={() => {
+                                                setShowEvaluationModal(selectedFormation);
+                                            }}
+                                        >
+                                            ⭐ Évaluer
+                                        </button>
+                                    </>
                                 )}
 
                                 {isIndividu && (
@@ -2920,6 +2994,17 @@ const Dashboard = () => {
                 <RessourceViewer
                     formation={showResourcesModal}
                     onClose={() => setShowResourcesModal(null)}
+                />
+            )}
+
+            {/* Evaluation Modal for Individu */}
+            {showEvaluationModal && isIndividu && (
+                <EvaluationModal
+                    formation={showEvaluationModal}
+                    onClose={() => setShowEvaluationModal(null)}
+                    onSuccess={() => {
+                        console.log("Evaluation submitted successfully");
+                    }}
                 />
             )}
         </div >
