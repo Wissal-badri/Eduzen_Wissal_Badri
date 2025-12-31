@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import RessourceService from "../../services/ressource.service";
+import "../../styles/pages/ressources.css";
 
 const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
     const [ressources, setRessources] = useState([]);
@@ -31,12 +32,13 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
 
     useEffect(() => {
         loadAllResources();
-    }, [showArchived]);
+    }, []);
 
     const loadAllResources = async () => {
         setLoading(true);
         try {
-            const response = await RessourceService.getMyResources(showArchived);
+            // Always load all resources including archived for proper tab counts
+            const response = await RessourceService.getMyResources(true);
             setRessources(response.data);
         } catch (err) {
             console.error("Error loading resources:", err);
@@ -225,15 +227,15 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
         return icons[type] || '📁';
     };
 
-    const getTypeBadgeStyle = (type) => {
-        const styles = {
-            'PDF': { background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' },
-            'VIDEO': { background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)' },
-            'LIEN': { background: 'rgba(34, 211, 238, 0.15)', color: '#22d3ee', border: '1px solid rgba(34, 211, 238, 0.3)' },
-            'DOCUMENT': { background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' },
-            'IMAGE': { background: 'rgba(74, 222, 128, 0.15)', color: '#4ade80', border: '1px solid rgba(74, 222, 128, 0.3)' }
+    const getTypeClass = (type) => {
+        const classes = {
+            'PDF': 'pdf',
+            'VIDEO': 'video',
+            'LIEN': 'lien',
+            'DOCUMENT': 'document',
+            'IMAGE': 'image'
         };
-        return styles[type] || styles['DOCUMENT'];
+        return classes[type] || 'document';
     };
 
     const formatFileSize = (bytes) => {
@@ -245,8 +247,8 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
 
     if (loading) {
         return (
-            <div className="glass card" style={{ padding: '4rem', textAlign: 'center' }}>
-                <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
+            <div className="glass card loading-container">
+                <div className="spinner loading-spinner"></div>
                 <p className="text-muted">Chargement des ressources...</p>
             </div>
         );
@@ -259,165 +261,110 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                 <p className="text-muted">Gérez les documents et liens pour vos formations</p>
             </header>
 
-            {/* Toggle archived view */}
-            <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                    <input
-                        type="checkbox"
-                        checked={showArchived}
-                        onChange={(e) => setShowArchived(e.target.checked)}
-                        style={{ width: '18px', height: '18px', accentColor: '#a855f7' }}
-                    />
-                    <span className="text-muted">Afficher les ressources archivées</span>
-                </label>
+            {/* Toggle tabs for Active/Archived resources */}
+            <div className="ressources-tabs">
+                <button
+                    onClick={() => setShowArchived(false)}
+                    className={`ressources-tab ${!showArchived ? 'active' : ''}`}
+                >
+                    📚 Ressources actives
+                    <span className="ressources-tab-count">
+                        {ressources.filter(r => !r.archived).length}
+                    </span>
+                </button>
+                <button
+                    onClick={() => setShowArchived(true)}
+                    className={`ressources-tab archived ${showArchived ? 'active' : ''}`}
+                >
+                    📦 Archivées
+                    <span className="ressources-tab-count">
+                        {ressources.filter(r => r.archived).length}
+                    </span>
+                </button>
             </div>
 
             {/* My Formations with resources */}
             {myFormations.length === 0 ? (
-                <div className="glass card" style={{ padding: '4rem', textAlign: 'center' }}>
-                    <div style={{ fontSize: '4rem', marginBottom: '1.5rem' }}>📚</div>
-                    <h3 className="text-gradient font-black" style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+                <div className="glass card loading-container">
+                    <div className="empty-state-icon">📚</div>
+                    <h3 className="text-gradient font-black empty-state-title">
                         Aucune formation assignée
                     </h3>
                     <p className="text-muted">Vous n'avez pas encore de formation assignée.</p>
                 </div>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div className="formations-container">
                     {myFormations.map(formation => {
-                        const formationResources = ressources.filter(r => r.formationId === formation.id);
+                        // Filter resources based on active tab (archived or not)
+                        const formationResources = ressources.filter(r =>
+                            r.formationId === formation.id &&
+                            (showArchived ? r.archived : !r.archived)
+                        );
 
                         return (
-                            <div key={formation.id} className="glass card" style={{ padding: '2rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                            <div key={formation.id} className="glass card formation-card">
+                                <div className="formation-header">
                                     <div>
-                                        <h3 style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--text)', marginBottom: '0.5rem' }}>
+                                        <h3 className="formation-title">
                                             {formation.titre}
                                         </h3>
-                                        <p className="text-muted" style={{ fontSize: '0.85rem' }}>
+                                        <p className="text-muted formation-subtitle">
                                             {formation.nombreHeures}h • {formation.ville}
                                         </p>
                                     </div>
                                     <button
                                         onClick={() => handleOpenAddModal(formation)}
-                                        style={{
-                                            background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
-                                            border: 'none',
-                                            borderRadius: '0.75rem',
-                                            padding: '0.75rem 1.25rem',
-                                            color: 'white',
-                                            fontWeight: '700',
-                                            fontSize: '0.85rem',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            boxShadow: '0 4px 15px rgba(0, 212, 255, 0.3)'
-                                        }}
+                                        className="btn-add-resource"
                                     >
                                         <span>+</span> Ajouter une ressource
                                     </button>
                                 </div>
 
                                 {formationResources.length === 0 ? (
-                                    <div style={{
-                                        padding: '2rem',
-                                        background: 'rgba(255, 255, 255, 0.02)',
-                                        borderRadius: '1rem',
-                                        border: '1px dashed rgba(255, 255, 255, 0.1)',
-                                        textAlign: 'center'
-                                    }}>
+                                    <div className="empty-resources">
                                         <p className="text-muted">Aucune ressource ajoutée</p>
                                     </div>
                                 ) : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                    <div className="resources-list">
                                         {formationResources.map(resource => (
                                             <div
                                                 key={resource.id}
-                                                style={{
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    alignItems: 'center',
-                                                    padding: '1rem 1.25rem',
-                                                    background: resource.archived
-                                                        ? 'rgba(100, 100, 100, 0.1)'
-                                                        : 'rgba(255, 255, 255, 0.03)',
-                                                    borderRadius: '0.75rem',
-                                                    border: resource.archived
-                                                        ? '1px solid rgba(100, 100, 100, 0.2)'
-                                                        : '1px solid rgba(255, 255, 255, 0.05)',
-                                                    opacity: resource.archived ? 0.7 : 1
-                                                }}
+                                                className={`resource-item ${resource.archived ? 'archived' : ''}`}
                                             >
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
-                                                    <div style={{
-                                                        width: '50px',
-                                                        height: '50px',
-                                                        borderRadius: '0.75rem',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        fontSize: '1.5rem',
-                                                        ...getTypeBadgeStyle(resource.type)
-                                                    }}>
+                                                <div className="resource-content">
+                                                    <div className={`resource-type-icon ${getTypeClass(resource.type)}`}>
                                                         {getTypeIcon(resource.type)}
                                                     </div>
-                                                    <div style={{ flex: 1 }}>
-                                                        <div style={{
-                                                            fontWeight: '600',
-                                                            color: 'var(--text)',
-                                                            marginBottom: '0.25rem',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '0.5rem'
-                                                        }}>
+                                                    <div className="resource-info">
+                                                        <div className="resource-name">
                                                             {resource.nom}
                                                             {resource.archived && (
-                                                                <span style={{
-                                                                    background: 'rgba(100, 100, 100, 0.3)',
-                                                                    color: '#888',
-                                                                    padding: '0.15rem 0.5rem',
-                                                                    borderRadius: '0.5rem',
-                                                                    fontSize: '0.65rem',
-                                                                    fontWeight: '600'
-                                                                }}>ARCHIVÉ</span>
+                                                                <span className="badge-archived">ARCHIVÉ</span>
                                                             )}
                                                         </div>
                                                         {resource.description && (
-                                                            <div className="text-muted" style={{ fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                                                            <div className="text-muted resource-description">
                                                                 {resource.description.length > 60
                                                                     ? resource.description.substring(0, 60) + '...'
                                                                     : resource.description}
                                                             </div>
                                                         )}
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                                                            <span style={{
-                                                                ...getTypeBadgeStyle(resource.type),
-                                                                padding: '0.2rem 0.6rem',
-                                                                borderRadius: '2rem',
-                                                                fontSize: '0.65rem',
-                                                                fontWeight: '700'
-                                                            }}>
+                                                        <div className="resource-meta">
+                                                            <span className={`badge badge-${getTypeClass(resource.type)}`}>
                                                                 {resource.type}
                                                             </span>
                                                             {resource.hasFile && (
-                                                                <span style={{
-                                                                    background: 'rgba(16, 185, 129, 0.15)',
-                                                                    color: '#10b981',
-                                                                    padding: '0.2rem 0.6rem',
-                                                                    borderRadius: '2rem',
-                                                                    fontSize: '0.65rem',
-                                                                    fontWeight: '600'
-                                                                }}>
+                                                                <span className="badge-file">
                                                                     📎 Fichier joint
                                                                 </span>
                                                             )}
                                                             {resource.tailleFichier && (
-                                                                <span className="text-muted" style={{ fontSize: '0.7rem' }}>
+                                                                <span className="text-muted resource-size">
                                                                     {formatFileSize(resource.tailleFichier)}
                                                                 </span>
                                                             )}
                                                             {resource.nombreTelechargements > 0 && (
-                                                                <span className="text-muted" style={{ fontSize: '0.7rem' }}>
+                                                                <span className="text-muted resource-size">
                                                                     📥 {resource.nombreTelechargements}
                                                                 </span>
                                                             )}
@@ -426,20 +373,13 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                                                 </div>
 
                                                 {/* Action buttons */}
-                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <div className="resource-actions">
                                                     {/* View button */}
                                                     {(resource.hasFile || resource.lienExterne) && (
                                                         <button
                                                             onClick={() => handleViewResource(resource)}
                                                             title="Afficher"
-                                                            style={{
-                                                                padding: '0.5rem',
-                                                                background: 'rgba(0, 212, 255, 0.1)',
-                                                                border: 'none',
-                                                                borderRadius: '0.5rem',
-                                                                cursor: 'pointer',
-                                                                fontSize: '1rem'
-                                                            }}
+                                                            className="btn-action view"
                                                         >
                                                             👁️
                                                         </button>
@@ -450,14 +390,7 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                                                         <button
                                                             onClick={() => handleDownloadResource(resource)}
                                                             title="Télécharger"
-                                                            style={{
-                                                                padding: '0.5rem',
-                                                                background: 'rgba(16, 185, 129, 0.1)',
-                                                                border: 'none',
-                                                                borderRadius: '0.5rem',
-                                                                cursor: 'pointer',
-                                                                fontSize: '1rem'
-                                                            }}
+                                                            className="btn-action download"
                                                         >
                                                             📥
                                                         </button>
@@ -467,14 +400,7 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                                                     <button
                                                         onClick={() => handleEditResource(resource)}
                                                         title="Modifier"
-                                                        style={{
-                                                            padding: '0.5rem',
-                                                            background: 'rgba(245, 158, 11, 0.1)',
-                                                            border: 'none',
-                                                            borderRadius: '0.5rem',
-                                                            cursor: 'pointer',
-                                                            fontSize: '1rem'
-                                                        }}
+                                                        className="btn-action edit"
                                                     >
                                                         ✏️
                                                     </button>
@@ -483,14 +409,7 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                                                     <button
                                                         onClick={() => handleArchiveResource(resource)}
                                                         title={resource.archived ? "Désarchiver" : "Archiver"}
-                                                        style={{
-                                                            padding: '0.5rem',
-                                                            background: 'rgba(168, 85, 247, 0.1)',
-                                                            border: 'none',
-                                                            borderRadius: '0.5rem',
-                                                            cursor: 'pointer',
-                                                            fontSize: '1rem'
-                                                        }}
+                                                        className="btn-action archive"
                                                     >
                                                         {resource.archived ? '📤' : '📦'}
                                                     </button>
@@ -499,14 +418,7 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                                                     <button
                                                         onClick={() => setShowDeleteConfirm(resource)}
                                                         title="Supprimer"
-                                                        style={{
-                                                            padding: '0.5rem',
-                                                            background: 'rgba(239, 68, 68, 0.1)',
-                                                            border: 'none',
-                                                            borderRadius: '0.5rem',
-                                                            cursor: 'pointer',
-                                                            fontSize: '1rem'
-                                                        }}
+                                                        className="btn-action delete"
                                                     >
                                                         🗑️
                                                     </button>
@@ -524,20 +436,16 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
             {/* Add/Edit Resource Modal */}
             {showAddModal && (
                 <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-                    <div className="modal-content glass" onClick={(e) => e.stopPropagation()} style={{
-                        maxWidth: '550px',
-                        padding: '2.5rem',
-                        borderRadius: '1.5rem'
-                    }}>
-                        <h2 style={{ color: 'white', fontSize: '1.5rem', fontWeight: '800', marginBottom: '0.5rem' }}>
+                    <div className="modal-content glass resource-modal" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="resource-modal-title">
                             {editingResource ? 'Modifier la ressource' : 'Ajouter une ressource'}
                         </h2>
-                        <p className="text-muted" style={{ marginBottom: '2rem', fontSize: '0.9rem' }}>
-                            Formation: <span style={{ color: 'var(--primary)' }}>{selectedFormation?.titre}</span>
+                        <p className="text-muted resource-modal-subtitle">
+                            Formation: <span>{selectedFormation?.titre}</span>
                         </p>
 
                         <form onSubmit={handleSubmit}>
-                            <div className="input-group" style={{ marginBottom: '1.25rem' }}>
+                            <div className="input-group">
                                 <label className="input-label">Nom de la ressource *</label>
                                 <input
                                     type="text"
@@ -549,13 +457,12 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                                 />
                             </div>
 
-                            <div className="input-group" style={{ marginBottom: '1.25rem' }}>
+                            <div className="input-group">
                                 <label className="input-label">Type de ressource</label>
                                 <select
                                     className="input-field"
                                     value={formData.type}
                                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                    style={{ background: 'rgba(255, 255, 255, 0.05)' }}
                                 >
                                     <option value="DOCUMENT">📁 Document</option>
                                     <option value="PDF">📄 PDF</option>
@@ -566,19 +473,12 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                             </div>
 
                             {/* File Upload */}
-                            <div className="input-group" style={{ marginBottom: '1.25rem' }}>
+                            <div className="input-group">
                                 <label className="input-label">
                                     Joindre un fichier {editingResource?.hasFile && '(remplacer l\'existant)'}
                                 </label>
-                                <div style={{
-                                    border: '2px dashed rgba(0, 212, 255, 0.3)',
-                                    borderRadius: '0.75rem',
-                                    padding: '1.5rem',
-                                    textAlign: 'center',
-                                    background: 'rgba(0, 212, 255, 0.05)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease'
-                                }}
+                                <div
+                                    className="file-upload-zone"
                                     onClick={() => fileInputRef.current?.click()}
                                 >
                                     <input
@@ -590,25 +490,25 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                                     />
                                     {formData.file ? (
                                         <div>
-                                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📎</div>
-                                            <p style={{ color: 'var(--text)', fontWeight: '600' }}>{formData.file.name}</p>
-                                            <p className="text-muted" style={{ fontSize: '0.8rem' }}>
+                                            <div className="file-upload-icon">📎</div>
+                                            <p className="file-upload-name">{formData.file.name}</p>
+                                            <p className="text-muted file-upload-size">
                                                 {formatFileSize(formData.file.size)}
                                             </p>
                                         </div>
                                     ) : editingResource?.hasFile ? (
                                         <div>
-                                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📄</div>
+                                            <div className="file-upload-icon">📄</div>
                                             <p className="text-muted">Fichier actuel: {editingResource.nomFichierOriginal}</p>
-                                            <p style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>
+                                            <p className="file-upload-hint">
                                                 Cliquez pour remplacer
                                             </p>
                                         </div>
                                     ) : (
                                         <div>
-                                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📤</div>
+                                            <div className="file-upload-icon">📤</div>
                                             <p className="text-muted">Glissez un fichier ici ou cliquez pour parcourir</p>
-                                            <p style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>
+                                            <p className="file-upload-hint">
                                                 PDF, Documents, Images, Vidéos...
                                             </p>
                                         </div>
@@ -616,19 +516,13 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                                 </div>
                             </div>
 
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '1rem',
-                                margin: '1.5rem 0',
-                                color: 'var(--text-muted)'
-                            }}>
-                                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
-                                <span style={{ fontSize: '0.8rem' }}>OU</span>
-                                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+                            <div className="form-divider">
+                                <div className="form-divider-line"></div>
+                                <span className="form-divider-text">OU</span>
+                                <div className="form-divider-line"></div>
                             </div>
 
-                            <div className="input-group" style={{ marginBottom: '1.25rem' }}>
+                            <div className="input-group">
                                 <label className="input-label">Lien externe (URL)</label>
                                 <input
                                     type="url"
@@ -639,7 +533,7 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                                 />
                             </div>
 
-                            <div className="input-group" style={{ marginBottom: '1.5rem' }}>
+                            <div className="input-group">
                                 <label className="input-label">Description</label>
                                 <textarea
                                     className="input-field"
@@ -647,56 +541,37 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     placeholder="Description de la ressource..."
                                     rows="3"
-                                    style={{ resize: 'vertical' }}
                                 />
                             </div>
 
                             {message.text && (
-                                <div style={{
-                                    padding: '1rem',
-                                    borderRadius: '0.75rem',
-                                    marginBottom: '1.5rem',
-                                    background: message.type === 'success'
-                                        ? 'rgba(16, 185, 129, 0.1)'
-                                        : 'rgba(239, 68, 68, 0.1)',
-                                    color: message.type === 'success' ? '#10b981' : '#f87171',
-                                    textAlign: 'center',
-                                    fontSize: '0.9rem'
-                                }}>
+                                <div className={`form-message ${message.type}`}>
                                     {message.text}
                                 </div>
                             )}
 
-                            <div style={{ display: 'flex', gap: '1rem' }}>
+                            <div className="form-actions">
                                 <button
                                     type="button"
                                     onClick={() => setShowAddModal(false)}
-                                    style={{
-                                        flex: 1,
-                                        padding: '0.875rem',
-                                        borderRadius: '0.75rem',
-                                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                                        background: 'rgba(255, 255, 255, 0.05)',
-                                        color: 'var(--text-muted)',
-                                        fontWeight: '600',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="btn-cancel"
                                 >
                                     Annuler
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn btn-primary"
-                                    style={{ flex: 1, padding: '0.875rem' }}
                                     disabled={uploading}
+                                    className="btn-submit"
                                 >
                                     {uploading ? (
-                                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                            <span className="spinner" style={{ width: '16px', height: '16px' }}></span>
-                                            Upload en cours...
+                                        <span className="btn-submit-content loading">
+                                            <span className="spinner"></span>
+                                            Enregistrement...
                                         </span>
                                     ) : (
-                                        editingResource ? 'Mettre à jour' : 'Ajouter'
+                                        <span className="btn-submit-content">
+                                            {editingResource ? '✓ Mettre à jour' : '✓ Enregistrer la ressource'}
+                                        </span>
                                     )}
                                 </button>
                             </div>
@@ -708,54 +583,30 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
             {/* Delete Confirmation Modal */}
             {showDeleteConfirm && (
                 <div className="modal-overlay" onClick={() => setShowDeleteConfirm(null)}>
-                    <div className="modal-content glass" onClick={(e) => e.stopPropagation()} style={{
-                        maxWidth: '420px',
-                        padding: '2rem',
-                        borderRadius: '1.5rem',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🗑️</div>
-                        <h3 style={{ color: 'white', fontSize: '1.3rem', fontWeight: '700', marginBottom: '0.75rem' }}>
+                    <div className="modal-content glass delete-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="delete-modal-icon">🗑️</div>
+                        <h3 className="delete-modal-title">
                             Supprimer cette ressource ?
                         </h3>
-                        <p className="text-muted" style={{ marginBottom: '0.5rem' }}>
+                        <p className="text-muted">
                             Êtes-vous sûr de vouloir supprimer
                         </p>
-                        <p style={{ color: 'var(--primary)', fontWeight: '600', marginBottom: '1.5rem' }}>
+                        <p className="delete-modal-name">
                             "{showDeleteConfirm.nom}"
                         </p>
-                        <p className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+                        <p className="text-muted delete-modal-warning">
                             Cette action est irréversible. Le fichier sera également supprimé.
                         </p>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div className="delete-modal-actions">
                             <button
                                 onClick={() => setShowDeleteConfirm(null)}
-                                style={{
-                                    flex: 1,
-                                    padding: '0.875rem',
-                                    borderRadius: '0.75rem',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    color: 'var(--text-muted)',
-                                    fontWeight: '600',
-                                    cursor: 'pointer'
-                                }}
+                                className="btn-cancel"
                             >
                                 Annuler
                             </button>
                             <button
                                 onClick={() => handleDeleteResource(showDeleteConfirm.id)}
-                                style={{
-                                    flex: 1,
-                                    padding: '0.875rem',
-                                    borderRadius: '0.75rem',
-                                    border: 'none',
-                                    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                                    color: 'white',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)'
-                                }}
+                                className="btn-delete"
                             >
                                 Supprimer
                             </button>
@@ -767,98 +618,52 @@ const RessourceManagement = ({ formations, currentUser, onSuccess }) => {
             {/* View File Modal */}
             {showViewModal && (
                 <div className="modal-overlay" onClick={() => setShowViewModal(null)}>
-                    <div className="modal-content glass" onClick={(e) => e.stopPropagation()} style={{
-                        maxWidth: '900px',
-                        maxHeight: '90vh',
-                        padding: '1.5rem',
-                        borderRadius: '1.5rem',
-                        overflow: 'hidden'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                            <h3 style={{ color: 'white', fontSize: '1.2rem', fontWeight: '700' }}>
+                    <div className="modal-content glass view-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="view-modal-header">
+                            <h3 className="view-modal-title">
                                 {showViewModal.nom}
                             </h3>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <div className="view-modal-actions">
                                 <button
                                     onClick={() => handleDownloadResource(showViewModal)}
-                                    style={{
-                                        padding: '0.5rem 1rem',
-                                        background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
-                                        border: 'none',
-                                        borderRadius: '0.5rem',
-                                        color: 'white',
-                                        fontWeight: '600',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem'
-                                    }}
+                                    className="btn-download"
                                 >
                                     📥 Télécharger
                                 </button>
                                 <button
                                     onClick={() => setShowViewModal(null)}
-                                    style={{
-                                        padding: '0.5rem',
-                                        background: 'rgba(255, 255, 255, 0.1)',
-                                        border: 'none',
-                                        borderRadius: '0.5rem',
-                                        color: 'white',
-                                        cursor: 'pointer',
-                                        fontSize: '1.2rem'
-                                    }}
+                                    className="btn-close"
                                 >
                                     ✕
                                 </button>
                             </div>
                         </div>
-                        <div style={{
-                            background: 'rgba(0, 0, 0, 0.3)',
-                            borderRadius: '0.75rem',
-                            overflow: 'hidden',
-                            height: 'calc(90vh - 120px)'
-                        }}>
+                        <div className="view-modal-content">
                             {showViewModal.contentType?.startsWith('image/') ? (
                                 <img
                                     src={`http://localhost:8096/api/ressources/${showViewModal.id}/view`}
                                     alt={showViewModal.nom}
-                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                                    className="view-modal-preview"
                                 />
                             ) : showViewModal.contentType === 'application/pdf' ? (
                                 <iframe
                                     src={`http://localhost:8096/api/ressources/${showViewModal.id}/view`}
-                                    style={{ width: '100%', height: '100%', border: 'none' }}
+                                    className="view-modal-preview"
                                     title={showViewModal.nom}
                                 />
                             ) : showViewModal.contentType?.startsWith('video/') ? (
                                 <video
                                     src={`http://localhost:8096/api/ressources/${showViewModal.id}/view`}
                                     controls
-                                    style={{ width: '100%', height: '100%' }}
+                                    className="view-modal-preview"
                                 />
                             ) : (
-                                <div style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    height: '100%',
-                                    color: 'var(--text-muted)'
-                                }}>
-                                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>📄</div>
+                                <div className="view-modal-fallback">
+                                    <div className="view-modal-fallback-icon">📄</div>
                                     <p>Aperçu non disponible pour ce type de fichier</p>
                                     <button
                                         onClick={() => handleDownloadResource(showViewModal)}
-                                        style={{
-                                            marginTop: '1rem',
-                                            padding: '0.75rem 1.5rem',
-                                            background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
-                                            border: 'none',
-                                            borderRadius: '0.75rem',
-                                            color: 'white',
-                                            fontWeight: '600',
-                                            cursor: 'pointer'
-                                        }}
+                                        className="btn-download-fallback"
                                     >
                                         📥 Télécharger le fichier
                                     </button>

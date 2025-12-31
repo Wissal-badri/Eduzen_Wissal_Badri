@@ -1,0 +1,120 @@
+/* =============================================
+   INPUT & FORM STYLES
+   ============================================= */
+
+.input-group {
+    margin-bottom: 1.25rem;
+    text-align: left;
+}
+
+.input-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+}
+
+.input-field {
+    width: 100%;
+    padding: 0.85rem 1.1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.8rem;
+    color: var(--text);
+    font-size: 0.95rem;
+    transition: var(--transition);
+}
+
+/* Fix option visibility in dark mode */
+.input-field option {
+    background-color: var(--background);
+    color: var(--text);
+}
+
+[data-theme='light'] .input-field option {
+    background-color: white;
+    color: black;
+}
+
+.input-field:placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.input-field:focus {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+    outline: none;
+}
+
+/* Memo Input */
+.memo-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Date/Time Input Fix */
+input[type="datetime-local"] {
+    color: var(--text);
+    font-family: var(--font-sans);
+}
+
+/* Form Row Layout */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+/* Switch Toggle */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+[data-theme='light'] .slider {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input:checked+.slider {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+input:checked+.slider:before {
+    transform: translateX(24px);
+}

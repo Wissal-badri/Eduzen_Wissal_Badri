@@ -50,12 +50,44 @@ public class RessourceController {
      */
     @GetMapping("/formation/{formationId}")
     public ResponseEntity<?> getResourcesByFormation(@PathVariable Long formationId) {
+        System.out.println("=== GET RESOURCES BY FORMATION ===");
+        System.out.println("Formation ID requested: " + formationId);
+
         List<Ressource> ressources = ressourceRepository.findByFormationIdOrderByDateCreationDesc(formationId);
+        System.out.println("Total resources found: " + ressources.size());
+
+        for (Ressource r : ressources) {
+            System.out
+                    .println("  - Resource: id=" + r.getId() + ", nom=" + r.getNom() + ", archived=" + r.getArchived());
+        }
+
         // Filter out archived resources for normal view
         List<Ressource> activeResources = ressources.stream()
                 .filter(r -> r.getArchived() == null || !r.getArchived())
                 .toList();
+        System.out.println("Active resources after filter: " + activeResources.size());
+
         return ResponseEntity.ok(activeResources.stream().map(this::toDto).toList());
+    }
+
+    /**
+     * DEBUG: Get ALL resources (for debugging purposes)
+     */
+    @GetMapping("/debug/all")
+    public ResponseEntity<?> debugGetAllResources() {
+        List<Ressource> allResources = ressourceRepository.findAll();
+        System.out.println("=== DEBUG: ALL RESOURCES ===");
+        System.out.println("Total resources in DB: " + allResources.size());
+
+        for (Ressource r : allResources) {
+            System.out.println("  - id=" + r.getId() +
+                    ", nom=" + r.getNom() +
+                    ", formation_id=" + (r.getFormation() != null ? r.getFormation().getId() : "NULL") +
+                    ", formation_titre=" + (r.getFormation() != null ? r.getFormation().getTitre() : "NULL") +
+                    ", archived=" + r.getArchived());
+        }
+
+        return ResponseEntity.ok(allResources.stream().map(this::toDto).toList());
     }
 
     /**

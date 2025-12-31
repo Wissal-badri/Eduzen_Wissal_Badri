@@ -1,0 +1,92 @@
+/* =============================================
+   AUTH PAGE STYLES (Login / Register)
+   ============================================= */
+
+/* Nav Glass */
+.nav-glass {
+    position: sticky;
+    top: 1rem;
+    margin: 1rem auto 3rem;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 2.2rem;
+    width: calc(100% - 2rem);
+    max-width: 1000px;
+    border-radius: 1.2rem;
+}
+
+/* Auth Toggle */
+.auth-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    margin-bottom: 2.2rem;
+}
+
+.auth-toggle-btn {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: none !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    padding: 0 0 0.5rem 0 !important;
+    transition: var(--transition);
+    cursor: pointer;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.auth-toggle-btn.active {
+    color: var(--primary) !important;
+    border-bottom-color: var(--primary) !important;
+}
+
+/* Role Selector */
+.role-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+    margin-bottom: 1.8rem;
+}
+
+.role-btn {
+    padding: 0.8rem 0.5rem;
+    border-radius: 0.8rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.role-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(6, 182, 212, 0.3);
+}
+
+.role-btn.active {
+    background: rgba(6, 182, 212, 0.1);
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
+}
+
+/* Auth Navigation Link */
+.auth-nav-link {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: var(--transition);
+}
+
+.auth-nav-link:hover {
+    color: var(--accent);
+}

@@ -26,8 +26,14 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.disable()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/signup").permitAll()
+                        .requestMatchers("/api/ressources/*/download").permitAll()
+                        .requestMatchers("/api/ressources/*/view").permitAll()
+                        .requestMatchers("/api/ressources/formation/**").permitAll()
+                        .requestMatchers("/api/ressources/debug/**").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults()); // Simple authentication for now

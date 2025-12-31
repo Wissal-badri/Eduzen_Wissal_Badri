@@ -1,0 +1,43 @@
+/* =============================================
+   VARIABLES CSS - Design System Tokens
+   ============================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    /* Colors - Dark Theme (Default) */
+    --background: #060913;
+    --surface: rgba(16, 23, 42, 0.6);
+    --primary: #06b6d4;
+    --primary-glow: rgba(6, 182, 212, 0.4);
+    --secondary: #6366f1;
+    --accent: #22d3ee;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: rgba(255, 255, 255, 0.1);
+    --error: #ef4444;
+    --success: #10b981;
+
+    /* Typography */
+    --font-sans: 'Outfit', sans-serif;
+
+    /* Transitions */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Glassmorphism */
+    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+    --nav-bg: rgba(16, 23, 42, 0.8);
+}
+
+/* Light Theme */
+[data-theme='light'] {
+    --background: #f8fafc;
+    --surface: rgba(255, 255, 255, 0.7);
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --border: rgba(0, 0, 0, 0.1);
+    --glass-border: 1px solid rgba(0, 0, 0, 0.1);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+    --nav-bg: rgba(255, 255, 255, 0.8);
+}

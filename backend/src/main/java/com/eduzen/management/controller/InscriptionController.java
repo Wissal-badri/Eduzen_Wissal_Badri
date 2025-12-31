@@ -132,7 +132,7 @@ public class InscriptionController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT', 'FORMATEUR')")
     public List<Inscription> getAllInscriptions() {
         return inscriptionRepository.findAll();
     }

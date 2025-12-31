@@ -1,0 +1,174 @@
+/* =============================================
+   CARD STYLES
+   ============================================= */
+
+/* Glassmorphism Base */
+.glass {
+    background: var(--surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: 1.5rem;
+}
+
+.card {
+    padding: 2.5rem;
+}
+
+/* Stat Cards */
+.stat-card {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.02em;
+}
+
+.stat-card.glass:hover {
+    border-color: var(--primary);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(6, 182, 212, 0.1);
+}
+
+/* Training Cards */
+.trainings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.training-card {
+    padding: 2rem;
+    position: relative;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow: hidden;
+}
+
+.training-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.training-card:hover::before {
+    opacity: 1;
+}
+
+.training-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.training-card h3 {
+    padding-right: 4rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.training-badge {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 2rem;
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.training-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 1rem 0 1.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.training-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.price {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--accent);
+}
+
+/* Clock Card */
+.clock-card {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(71, 71, 231, 0.05));
+    border: 1px solid rgba(6, 182, 212, 0.1);
+}
+
+/* Role Cards */
+.role-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+}
+
+.role-card {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.role-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(6, 182, 212, 0.3);
+}
+
+.role-card.active {
+    background: rgba(6, 182, 212, 0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+}
+
+.role-icon {
+    font-size: 1.4rem;
+    opacity: 0.8;
+}
+
+.role-card.active .role-icon {
+    opacity: 1;
+}

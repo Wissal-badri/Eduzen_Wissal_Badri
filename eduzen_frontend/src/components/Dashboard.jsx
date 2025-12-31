@@ -245,6 +245,7 @@ const Dashboard = () => {
     const [trainingToUnenroll, setTrainingToUnenroll] = useState(null);
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [selectedInscToEdit, setSelectedInscToEdit] = useState(null);
+    const [showResourcesModal, setShowResourcesModal] = useState(null);
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -433,7 +434,7 @@ const Dashboard = () => {
                 }
             }
         }
-    }, [currentUser?.id, isAdmin, isAssistant, isIndividu]);
+    }, [currentUser?.id, isAdmin, isAssistant, isIndividu, isFormateur]);
 
     useEffect(() => {
         if (activeTab === 'inscriptions' && (isAdmin || isAssistant)) {
@@ -739,6 +740,15 @@ const Dashboard = () => {
                         </button>
                     )}
 
+                    {isFormateur && !isAdmin && !isAssistant && (
+                        <button
+                            className={`nav-item ${activeTab === 'mes-inscrits' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('mes-inscrits')}
+                        >
+                            <span className="icon">👥</span> Mes Inscrits
+                        </button>
+                    )}
+
                     <button
                         className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
                         onClick={() => setActiveTab('settings')}
@@ -976,8 +986,8 @@ const Dashboard = () => {
                                             </div>
                                         </div>
 
-                                        <button className="btn btn-outline" style={{ width: '100%', borderRadius: '1rem' }} onClick={() => setSelectedFormation(i.formation)}>
-                                            Accéder aux ressources
+                                        <button className="btn btn-primary" style={{ width: '100%', borderRadius: '1rem', background: 'linear-gradient(135deg, #10b981, #059669)' }} onClick={() => setShowResourcesModal(i.formation)}>
+                                            📚 Accéder aux ressources
                                         </button>
                                     </div>
                                 ))}
@@ -1022,26 +1032,28 @@ const Dashboard = () => {
                                         </div>
                                     </div>
 
-                                    {/* Formations Actives */}
-                                    <div className="stat-card glass" style={{
-                                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.02))',
-                                        border: '1px solid rgba(139, 92, 246, 0.2)',
-                                        borderLeft: '4px solid #8b5cf6',
-                                        padding: '1rem 1.2rem'
-                                    }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>{t('active_trainings')}</span>
-                                                <div style={{ padding: '0.5rem', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '10px', color: '#8b5cf6' }}>
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                    {/* Formations Actives - Admin/Assistant only */}
+                                    {(isAdmin || isAssistant) && (
+                                        <div className="stat-card glass" style={{
+                                            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.02))',
+                                            border: '1px solid rgba(139, 92, 246, 0.2)',
+                                            borderLeft: '4px solid #8b5cf6',
+                                            padding: '1rem 1.2rem'
+                                        }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>{t('active_trainings')}</span>
+                                                    <div style={{ padding: '0.5rem', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '10px', color: '#8b5cf6' }}>
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                                    </div>
+                                                </div>
+                                                <div style={{ marginTop: '0.6rem' }}>
+                                                    <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>{trainings.length}</span>
+                                                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Catalogue complet</p>
                                                 </div>
                                             </div>
-                                            <div style={{ marginTop: '0.6rem' }}>
-                                                <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>{trainings.length}</span>
-                                                <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Catalogue complet</p>
-                                            </div>
                                         </div>
-                                    </div>
+                                    )}
 
                                     {/* Formateurs Total - Admin/Assistant only */}
                                     {(isAdmin || isAssistant) && (
@@ -1140,7 +1152,8 @@ const Dashboard = () => {
 
                                     {/* Inscrits à mes formations - Formateur only */}
                                     {isFormateur && !isAdmin && !isAssistant && (
-                                        <div className="stat-card glass" style={{
+                                        <div className="stat-card glass" onClick={() => setActiveTab('mes-inscrits')} style={{
+                                            cursor: 'pointer',
                                             background: 'linear-gradient(135deg, rgba(63, 102, 241, 0.1), rgba(63, 102, 241, 0.02))',
                                             border: '1px solid rgba(63, 102, 241, 0.2)',
                                             borderLeft: '4px solid #6366f1',
@@ -1281,7 +1294,14 @@ const Dashboard = () => {
                             </div>
 
                             <aside className="overview-sidebar">
-                                <div className="clock-card glass" style={{ textAlign: 'center', padding: '2rem', marginBottom: '2rem' }}>
+                                <div className="clock-card glass" style={{
+                                    textAlign: 'center',
+                                    padding: '2rem',
+                                    marginBottom: '2rem',
+                                    position: 'sticky',
+                                    top: '1rem',
+                                    zIndex: 10
+                                }}>
                                     <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--primary)', marginBottom: '0.5rem' }}>
                                         {currentTime.toLocaleTimeString(lang === 'fr' ? 'fr-FR' : 'en-GB', { hour: '2-digit', minute: '2-digit' })}
                                     </div>
@@ -2065,6 +2085,137 @@ const Dashboard = () => {
                         </section>
                     )
                 }
+
+                {/* Mes Inscrits - Formateur only */}
+                {isFormateur && !isAdmin && !isAssistant && activeTab === 'mes-inscrits' && (
+                    <section className="fade-in">
+                        <header className="content-title">
+                            <h1 className="text-gradient font-black">Mes Inscrits</h1>
+                            <p className="text-muted">Personnes inscrites à vos formations</p>
+                        </header>
+
+                        <div className="inscriptions-list card glass" style={{ padding: '2.5rem', background: 'rgba(10, 15, 30, 0.4)' }}>
+                            {(() => {
+                                const myInscriptionsList = allInscriptions.filter(insc => {
+                                    const formation = trainings.find(f => f.id === insc.formation?.id);
+                                    return formation?.formateur?.user?.id === currentUser?.id || formation?.formateur?.user?.username === currentUser?.username;
+                                });
+
+                                if (myInscriptionsList.length === 0) {
+                                    return (
+                                        <div style={{ textAlign: 'center', padding: '4rem' }}>
+                                            <div style={{ fontSize: '4rem', marginBottom: '1.5rem', opacity: 0.6 }}>👥</div>
+                                            <h3 className="text-gradient font-black" style={{ fontSize: '1.4rem', marginBottom: '0.5rem' }}>Aucun inscrit</h3>
+                                            <p className="text-muted">Aucune personne n'est encore inscrite à vos formations.</p>
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div className="table-wrapper" style={{ overflowX: 'auto' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.8rem' }}>
+                                            <thead>
+                                                <tr style={{ textAlign: 'left', color: 'var(--text-muted)', fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                                    <th style={{ padding: '0 1.5rem' }}>Inscrit</th>
+                                                    <th style={{ padding: '0 1.5rem' }}>Contact</th>
+                                                    <th style={{ padding: '0 1.5rem' }}>Formation</th>
+                                                    <th style={{ padding: '0 1.5rem' }}>Date d'inscription</th>
+                                                    <th style={{ padding: '0 1.5rem', textAlign: 'center' }}>Statut</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {myInscriptionsList.map(insc => (
+                                                    <tr key={insc.id} className="glass" style={{
+                                                        borderRadius: '16px',
+                                                        background: 'rgba(255,255,255,0.02)',
+                                                        transition: 'all 0.3s ease',
+                                                        verticalAlign: 'middle'
+                                                    }}>
+                                                        <td style={{ padding: '1.2rem 1.5rem', borderRadius: '16px 0 0 16px' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                                <div style={{
+                                                                    width: '45px',
+                                                                    height: '45px',
+                                                                    borderRadius: '12px',
+                                                                    background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    fontWeight: '700',
+                                                                    fontSize: '1rem',
+                                                                    color: 'white'
+                                                                }}>
+                                                                    {(insc.individu?.prenom?.[0] || '').toUpperCase()}{(insc.individu?.nom?.[0] || '').toUpperCase()}
+                                                                </div>
+                                                                <div>
+                                                                    <div style={{ fontWeight: '700', fontSize: '1rem', color: '#fff' }}>
+                                                                        {insc.individu?.prenom} {insc.individu?.nom}
+                                                                    </div>
+                                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                                        {insc.individu?.ville || 'Non renseignée'}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ padding: '1.2rem 1.5rem' }}>
+                                                            <div style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '500' }}>
+                                                                {insc.individu?.email}
+                                                            </div>
+                                                            {insc.individu?.telephone && (
+                                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                                                    📞 {insc.individu?.telephone}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td style={{ padding: '1.2rem 1.5rem' }}>
+                                                            <span style={{
+                                                                display: 'inline-block',
+                                                                backgroundColor: 'rgba(34, 211, 238, 0.08)',
+                                                                color: '#22d3ee',
+                                                                padding: '0.4rem 1rem',
+                                                                borderRadius: '2rem',
+                                                                border: '1px solid rgba(34, 211, 238, 0.2)',
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: '700'
+                                                            }}>
+                                                                {insc.formation?.titre}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '1.2rem 1.5rem' }}>
+                                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                                {insc.dateInscription ? new Date(insc.dateInscription).toLocaleDateString('fr-FR', {
+                                                                    day: 'numeric',
+                                                                    month: 'short',
+                                                                    year: 'numeric'
+                                                                }) : 'N/A'}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '1.2rem 1.5rem', textAlign: 'center', borderRadius: '0 16px 16px 0' }}>
+                                                            <span style={{
+                                                                display: 'inline-block',
+                                                                padding: '0.4rem 0.8rem',
+                                                                borderRadius: '8px',
+                                                                fontSize: '0.7rem',
+                                                                fontWeight: '800',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '0.05em',
+                                                                background: insc.statut === 'CONFIRMEE' ? 'rgba(16, 185, 129, 0.15)' : (insc.statut === 'BLOQUEE' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 211, 238, 0.15)'),
+                                                                color: insc.statut === 'CONFIRMEE' ? '#10b981' : (insc.statut === 'BLOQUEE' ? '#f87171' : '#22d3ee'),
+                                                                border: `1px solid ${insc.statut === 'CONFIRMEE' ? 'rgba(16, 185, 129, 0.2)' : (insc.statut === 'BLOQUEE' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 211, 238, 0.2)')}`
+                                                            }}>
+                                                                {insc.statut === 'CONFIRMEE' ? '✓ Confirmé' : (insc.statut === 'BLOQUEE' ? '🚫 Bloqué' : '⌛ En attente')}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </section>
+                )}
             </main >
 
             {/* Language Selection Modal */}
@@ -2398,21 +2549,43 @@ const Dashboard = () => {
                                 borderTop: '1px solid rgba(255, 255, 255, 0.05)',
                                 background: 'rgba(255, 255, 255, 0.01)',
                                 display: 'flex',
-                                gap: '1rem'
+                                gap: '1rem',
+                                flexWrap: 'wrap'
                             }}>
                                 <button
                                     className="btn btn-outline"
-                                    style={{ flex: 1, padding: '1rem' }}
+                                    style={{ flex: 1, padding: '1rem', minWidth: '120px' }}
                                     onClick={() => setSelectedFormation(null)}
                                 >
                                     Fermer
                                 </button>
+
+                                {/* Show Resources button for enrolled individus */}
+                                {isIndividu && myInscriptions.some(ins => ins.formation?.id === selectedFormation.id) && (
+                                    <button
+                                        className="btn btn-primary"
+                                        style={{
+                                            flex: 1,
+                                            padding: '1rem',
+                                            minWidth: '150px',
+                                            background: 'linear-gradient(135deg, #10b981, #059669)',
+                                            boxShadow: '0 10px 20px rgba(16, 185, 129, 0.2)'
+                                        }}
+                                        onClick={() => {
+                                            setShowResourcesModal(selectedFormation);
+                                        }}
+                                    >
+                                        📚 Voir les ressources
+                                    </button>
+                                )}
+
                                 {isIndividu && (
                                     <button
                                         className={`btn ${myInscriptions.some(ins => ins.formation?.id === selectedFormation.id) ? 'btn-outline' : 'btn-primary'}`}
                                         style={{
                                             flex: 1.5,
                                             padding: '1rem',
+                                            minWidth: '180px',
                                             boxShadow: myInscriptions.some(ins => ins.formation?.id === selectedFormation.id) ? 'none' : '0 10px 20px rgba(34, 211, 238, 0.2)'
                                         }}
                                         onClick={() => {
@@ -2743,10 +2916,10 @@ const Dashboard = () => {
             )}
 
             {/* Resources Modal for Individu */}
-            {selectedFormation && isIndividu && (
+            {showResourcesModal && isIndividu && (
                 <RessourceViewer
-                    formation={selectedFormation}
-                    onClose={() => setSelectedFormation(null)}
+                    formation={showResourcesModal}
+                    onClose={() => setShowResourcesModal(null)}
                 />
             )}
         </div >

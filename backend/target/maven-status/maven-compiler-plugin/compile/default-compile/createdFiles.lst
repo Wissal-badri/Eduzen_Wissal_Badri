@@ -6,6 +6,7 @@ com\eduzen\management\model\Formation.class
 com\eduzen\management\controller\IndividuController.class
 com\eduzen\management\model\Inscription.class
 com\eduzen\management\controller\PlanningController.class
+com\eduzen\management\service\FileStorageService.class
 com\eduzen\management\config\DatabaseConfig.class
 com\eduzen\management\dto\FormateurRequest.class
 com\eduzen\management\security\UserDetailsServiceImpl.class
@@ -16,6 +17,7 @@ com\eduzen\management\model\Notification.class
 com\eduzen\management\controller\InscriptionController.class
 com\eduzen\management\controller\FormationController.class
 com\eduzen\management\repository\UserRepository.class
+com\eduzen\management\config\FileStorageProperties.class
 com\eduzen\management\controller\EntrepriseController.class
 com\eduzen\management\model\Ressource.class
 com\eduzen\management\controller\MemoController.class
@@ -35,5 +37,6 @@ com\eduzen\management\repository\MemoRepository.class
 com\eduzen\management\repository\NotificationRepository.class
 com\eduzen\management\model\Memo.class
 com\eduzen\management\controller\InscriptionController$RegistrationRequest.class
+com\eduzen\management\repository\RessourceRepository.class
 com\eduzen\management\model\Role.class
 com\eduzen\management\model\Entreprise.class

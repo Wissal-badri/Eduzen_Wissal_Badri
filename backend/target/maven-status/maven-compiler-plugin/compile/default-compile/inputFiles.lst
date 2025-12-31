@@ -14,6 +14,7 @@ C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\ba
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\model\Formation.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\config\DatabaseConfig.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\model\Memo.java
+C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\config\FileStorageProperties.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\controller\InscriptionController.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\model\Notification.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\repository\InscriptionRepository.java
@@ -26,6 +27,7 @@ C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\ba
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\controller\EntrepriseController.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\model\Ressource.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\controller\FormateurController.java
+C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\service\FileStorageService.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\controller\NotificationController.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\repository\EntrepriseRepository.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\repository\FormationRepository.java
