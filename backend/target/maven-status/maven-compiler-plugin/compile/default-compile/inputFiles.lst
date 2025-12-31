@@ -3,6 +3,8 @@ C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\ba
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\model\Individu.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\ManagementApplication.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\model\Role.java
+C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\repository\RessourceRepository.java
+C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\controller\RessourceController.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\repository\PlanningRepository.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\model\Planning.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\controller\PlanningController.java
@@ -22,6 +24,7 @@ C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\ba
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\controller\IndividuManagementController.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\model\User.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\controller\EntrepriseController.java
+C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\model\Ressource.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\controller\FormateurController.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\controller\NotificationController.java
 C:\Users\HP\OneDrive\Bureau\Eduzen_Wissal_Badri-main\Eduzen_Wissal_Badri-main\backend\src\main\java\com\eduzen\management\repository\EntrepriseRepository.java

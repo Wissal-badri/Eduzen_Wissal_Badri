@@ -56,4 +56,33 @@ public class FormateurController {
 
         return ResponseEntity.ok(formateurRepository.save(formateur));
     }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
+    public ResponseEntity<?> updateFormateur(@PathVariable Long id, @RequestBody FormateurRequest request) {
+        return formateurRepository.findById(id).map(formateur -> {
+            User user = formateur.getUser();
+            user.setUsername(request.getUsername());
+            user.setEmail(request.getEmail());
+            if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+                user.setPassword(passwordEncoder.encode(request.getPassword()));
+            }
+            userRepository.save(user);
+
+            formateur.setCompetences(request.getCompetences());
+            formateur.setRemarques(request.getRemarques());
+            return ResponseEntity.ok(formateurRepository.save(formateur));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'ASSISTANT')")
+    public ResponseEntity<?> deleteFormateur(@PathVariable Long id) {
+        return formateurRepository.findById(id).map(formateur -> {
+            User user = formateur.getUser();
+            formateurRepository.delete(formateur);
+            userRepository.delete(user);
+            return ResponseEntity.ok().build();
+        }).orElse(ResponseEntity.notFound().build());
+    }
 }

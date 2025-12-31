@@ -15,6 +15,9 @@ import PlanningService from "../services/planning.service";
 import axios from "axios";
 import authHeader from "../services/auth-header";
 import ProfileCompletion from "./ProfileCompletion";
+import PasswordManagement from "./admin/PasswordManagement";
+import RessourceManagement from "./formateur/RessourceManagement";
+import RessourceViewer from "./individu/RessourceViewer";
 
 const translations = {
     fr: {
@@ -381,6 +384,7 @@ const Dashboard = () => {
     const isAdmin = roleName === 'ROLE_ADMIN' || roleName === 'ADMIN';
     const isAssistant = roleName === 'ROLE_ASSISTANT' || roleName === 'ASSISTANT';
     const isIndividu = roleName === 'ROLE_INDIVIDU' || roleName === 'INDIVIDU';
+    const isFormateur = roleName === 'ROLE_FORMATEUR' || roleName === 'FORMATEUR';
     const isProfileComplete = currentUser && currentUser.profileCompleted;
 
     const formatLastChange = (dateString) => {
@@ -413,7 +417,7 @@ const Dashboard = () => {
         if (currentUser?.id) {
             loadFormations();
             loadMemos();
-            if (isAdmin || isAssistant) {
+            if (isAdmin || isAssistant || isFormateur) {
                 loadFormateurs();
                 loadEntreprises();
                 loadIndividus();
@@ -630,7 +634,7 @@ const Dashboard = () => {
                 </div>
 
                 <nav className="sidebar-nav">
-                    {(isAdmin || isAssistant) && (
+                    {(isAdmin || isAssistant || isFormateur) && (
                         <button
                             className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
                             onClick={() => setActiveTab('overview')}
@@ -671,7 +675,7 @@ const Dashboard = () => {
                         </button>
                     )}
 
-                    {(isAdmin || isAssistant) && (
+                    {(isAdmin || isAssistant || isFormateur) && (
                         <button
                             className={`nav-item ${activeTab === 'planning' ? 'active' : ''}`}
                             onClick={() => setActiveTab('planning')}
@@ -714,6 +718,24 @@ const Dashboard = () => {
                         >
                             <span className="icon">🔔</span> Notifications
                             {unreadNotifications > 0 && <span className="sidebar-badge">{unreadNotifications}</span>}
+                        </button>
+                    )}
+
+                    {isAdmin && (
+                        <button
+                            className={`nav-item ${activeTab === 'passwords' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('passwords')}
+                        >
+                            <span className="icon">🔑</span> Mots de passe
+                        </button>
+                    )}
+
+                    {isFormateur && !isAdmin && !isAssistant && (
+                        <button
+                            className={`nav-item ${activeTab === 'mes-ressources' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('mes-ressources')}
+                        >
+                            <span className="icon">📂</span> Mes Ressources
                         </button>
                     )}
 
@@ -964,7 +986,7 @@ const Dashboard = () => {
                     </section>
                 )}
 
-                {(isAdmin || isAssistant) && activeTab === 'overview' && (
+                {(isAdmin || isAssistant || isFormateur) && activeTab === 'overview' && (
                     <section className="fade-in">
                         <header className="content-title">
                             <h1 className="text-gradient font-black">{t('dashboard_title')}</h1>
@@ -1021,26 +1043,54 @@ const Dashboard = () => {
                                         </div>
                                     </div>
 
-                                    {/* Formateurs Total */}
-                                    <div className="stat-card glass" style={{
-                                        background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(236, 72, 153, 0.02))',
-                                        border: '1px solid rgba(236, 72, 153, 0.2)',
-                                        borderLeft: '4px solid #ec4899',
-                                        padding: '1rem 1.2rem'
-                                    }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>{t('total_formateurs')}</span>
-                                                <div style={{ padding: '0.5rem', background: 'rgba(236, 72, 153, 0.1)', borderRadius: '10px', color: '#ec4899' }}>
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                    {/* Formateurs Total - Admin/Assistant only */}
+                                    {(isAdmin || isAssistant) && (
+                                        <div className="stat-card glass" style={{
+                                            background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(236, 72, 153, 0.02))',
+                                            border: '1px solid rgba(236, 72, 153, 0.2)',
+                                            borderLeft: '4px solid #ec4899',
+                                            padding: '1rem 1.2rem'
+                                        }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>{t('total_formateurs')}</span>
+                                                    <div style={{ padding: '0.5rem', background: 'rgba(236, 72, 153, 0.1)', borderRadius: '10px', color: '#ec4899' }}>
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                                    </div>
+                                                </div>
+                                                <div style={{ marginTop: '0.6rem' }}>
+                                                    <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>{formateurs.length}</span>
+                                                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Experts certifiés</p>
                                                 </div>
                                             </div>
-                                            <div style={{ marginTop: '0.6rem' }}>
-                                                <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>{formateurs.length}</span>
-                                                <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Experts certifiés</p>
+                                        </div>
+                                    )}
+
+                                    {/* Mes Formations - Formateur only */}
+                                    {isFormateur && !isAdmin && !isAssistant && (
+                                        <div className="stat-card glass" onClick={() => setActiveTab('trainings')} style={{
+                                            cursor: 'pointer',
+                                            background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(236, 72, 153, 0.02))',
+                                            border: '1px solid rgba(236, 72, 153, 0.2)',
+                                            borderLeft: '4px solid #ec4899',
+                                            padding: '1rem 1.2rem'
+                                        }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>Mes Formations</span>
+                                                    <div style={{ padding: '0.5rem', background: 'rgba(236, 72, 153, 0.1)', borderRadius: '10px', color: '#ec4899' }}>
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                                    </div>
+                                                </div>
+                                                <div style={{ marginTop: '0.6rem' }}>
+                                                    <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>
+                                                        {trainings.filter(f => f.formateur?.user?.id === currentUser?.id || f.formateur?.user?.username === currentUser?.username).length}
+                                                    </span>
+                                                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Formations assignées</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
 
                                     {/* Calendrier */}
                                     <div className="stat-card glass" onClick={() => setActiveTab('planning')} style={{
@@ -1064,49 +1114,105 @@ const Dashboard = () => {
                                         </div>
                                     </div>
 
-                                    {/* Inscriptions Formations */}
-                                    <div className="stat-card glass" onClick={() => setActiveTab('inscriptions')} style={{
-                                        cursor: 'pointer',
-                                        background: 'linear-gradient(135deg, rgba(63, 102, 241, 0.1), rgba(63, 102, 241, 0.02))',
-                                        border: '1px solid rgba(63, 102, 241, 0.2)',
-                                        borderLeft: '4px solid #6366f1',
-                                        padding: '1rem 1.2rem'
-                                    }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>Inscriptions</span>
-                                                <div style={{ padding: '0.5rem', background: 'rgba(63, 102, 241, 0.1)', borderRadius: '10px', color: '#6366f1' }}>
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                                    {/* Inscriptions Formations - Admin/Assistant only */}
+                                    {(isAdmin || isAssistant) && (
+                                        <div className="stat-card glass" onClick={() => setActiveTab('inscriptions')} style={{
+                                            cursor: 'pointer',
+                                            background: 'linear-gradient(135deg, rgba(63, 102, 241, 0.1), rgba(63, 102, 241, 0.02))',
+                                            border: '1px solid rgba(63, 102, 241, 0.2)',
+                                            borderLeft: '4px solid #6366f1',
+                                            padding: '1rem 1.2rem'
+                                        }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>Inscriptions</span>
+                                                    <div style={{ padding: '0.5rem', background: 'rgba(63, 102, 241, 0.1)', borderRadius: '10px', color: '#6366f1' }}>
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                                                    </div>
+                                                </div>
+                                                <div style={{ marginTop: '0.6rem' }}>
+                                                    <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>{stats.totalInscriptions}</span>
+                                                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Inscriptions totales</p>
                                                 </div>
                                             </div>
-                                            <div style={{ marginTop: '0.6rem' }}>
-                                                <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>{stats.totalInscriptions}</span>
-                                                <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Inscriptions totales</p>
-                                            </div>
                                         </div>
-                                    </div>
+                                    )}
 
-                                    {/* Individus Enregistrés */}
-                                    <div className="stat-card glass" onClick={() => setActiveTab('individus')} style={{
-                                        cursor: 'pointer',
-                                        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.02))',
-                                        border: '1px solid rgba(16, 185, 129, 0.2)',
-                                        borderLeft: '4px solid #10b981',
-                                        padding: '1rem 1.2rem'
-                                    }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                                <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>Individus</span>
-                                                <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '10px', color: '#10b981' }}>
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                    {/* Inscrits à mes formations - Formateur only */}
+                                    {isFormateur && !isAdmin && !isAssistant && (
+                                        <div className="stat-card glass" style={{
+                                            background: 'linear-gradient(135deg, rgba(63, 102, 241, 0.1), rgba(63, 102, 241, 0.02))',
+                                            border: '1px solid rgba(63, 102, 241, 0.2)',
+                                            borderLeft: '4px solid #6366f1',
+                                            padding: '1rem 1.2rem'
+                                        }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>Mes Inscrits</span>
+                                                    <div style={{ padding: '0.5rem', background: 'rgba(63, 102, 241, 0.1)', borderRadius: '10px', color: '#6366f1' }}>
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline></svg>
+                                                    </div>
+                                                </div>
+                                                <div style={{ marginTop: '0.6rem' }}>
+                                                    <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>
+                                                        {allInscriptions.filter(insc => {
+                                                            const formation = trainings.find(f => f.id === insc.formation?.id);
+                                                            return formation?.formateur?.user?.id === currentUser?.id || formation?.formateur?.user?.username === currentUser?.username;
+                                                        }).length}
+                                                    </span>
+                                                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Personnes inscrites</p>
                                                 </div>
                                             </div>
-                                            <div style={{ marginTop: '0.6rem' }}>
-                                                <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>{stats.totalIndividus || 0}</span>
-                                                <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Individus enregistrés</p>
+                                        </div>
+                                    )}
+
+                                    {/* Individus Enregistrés - Admin/Assistant only */}
+                                    {(isAdmin || isAssistant) && (
+                                        <div className="stat-card glass" onClick={() => setActiveTab('individus')} style={{
+                                            cursor: 'pointer',
+                                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.02))',
+                                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                                            borderLeft: '4px solid #10b981',
+                                            padding: '1rem 1.2rem'
+                                        }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>Individus</span>
+                                                    <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '10px', color: '#10b981' }}>
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                                    </div>
+                                                </div>
+                                                <div style={{ marginTop: '0.6rem' }}>
+                                                    <span className="stat-value" style={{ fontSize: '1.8rem', fontWeight: '900', lineHeight: 1 }}>{stats.totalIndividus || 0}</span>
+                                                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Individus enregistrés</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    )}
+
+                                    {/* Ressources - Formateur only */}
+                                    {isFormateur && !isAdmin && !isAssistant && (
+                                        <div className="stat-card glass" onClick={() => setActiveTab('mes-ressources')} style={{
+                                            cursor: 'pointer',
+                                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.02))',
+                                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                                            borderLeft: '4px solid #10b981',
+                                            padding: '1rem 1.2rem'
+                                        }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                                    <span className="stat-label" style={{ fontWeight: '800', fontSize: '0.75rem', opacity: 0.7 }}>Ressources</span>
+                                                    <div style={{ padding: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '10px', color: '#10b981' }}>
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                                    </div>
+                                                </div>
+                                                <div style={{ marginTop: '0.6rem' }}>
+                                                    <span className="stat-value" style={{ fontSize: '0.9rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Gérer</span>
+                                                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Documents & liens</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="memo-section glass" style={{ marginTop: '1.5rem', padding: '1.5rem', maxWidth: '600px' }}>
@@ -1687,6 +1793,21 @@ const Dashboard = () => {
                                 )}
                             </div>
                         </section>
+                    )
+                }
+
+                {
+                    isAdmin && activeTab === 'passwords' && (
+                        <PasswordManagement />
+                    )
+                }
+
+                {
+                    isFormateur && !isAdmin && !isAssistant && activeTab === 'mes-ressources' && (
+                        <RessourceManagement
+                            formations={trainings}
+                            currentUser={currentUser}
+                        />
                     )
                 }
 
@@ -2619,6 +2740,14 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Resources Modal for Individu */}
+            {selectedFormation && isIndividu && (
+                <RessourceViewer
+                    formation={selectedFormation}
+                    onClose={() => setSelectedFormation(null)}
+                />
             )}
         </div >
     );

@@ -4,6 +4,7 @@ import com.eduzen.management.model.User;
 import com.eduzen.management.repository.RoleRepository;
 import com.eduzen.management.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -185,5 +186,67 @@ public class AuthController {
         response.put("newsletters", user.getNewsletters() != null ? user.getNewsletters() : false);
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Admin endpoint to reset a user's password
+     * Only accessible by users with ADMIN role
+     */
+    @PutMapping("/admin/reset-password/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> adminResetPassword(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> payload) {
+
+        String newPassword = payload.get("newPassword");
+
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("message", "Le nouveau mot de passe est requis"));
+        }
+
+        if (newPassword.length() < 6) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("message", "Le mot de passe doit contenir au moins 6 caractères"));
+        }
+
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404)
+                    .body(Collections.singletonMap("message", "Utilisateur non trouvé"));
+        }
+
+        User user = userOpt.get();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setLastPasswordChange(LocalDateTime.now());
+        userRepository.save(user);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Mot de passe réinitialisé avec succès pour " + user.getUsername());
+        response.put("userId", userId);
+        response.put("username", user.getUsername());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Admin endpoint to get all users for password management
+     */
+    @GetMapping("/admin/users")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllUsersForAdmin() {
+        List<User> users = userRepository.findAll();
+
+        List<Map<String, Object>> userList = users.stream().map(user -> {
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("id", user.getId());
+            userMap.put("username", user.getUsername());
+            userMap.put("email", user.getEmail());
+            userMap.put("role", user.getRole() != null ? user.getRole().getName() : null);
+            userMap.put("lastPasswordChange", user.getLastPasswordChange());
+            return userMap;
+        }).toList();
+
+        return ResponseEntity.ok(userList);
     }
 }

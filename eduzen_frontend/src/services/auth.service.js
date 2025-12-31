@@ -86,6 +86,27 @@ const updatePreferences = (preferences) => {
   });
 };
 
+// Admin functions for password management
+const adminResetPassword = (userId, newPassword) => {
+  const user = getCurrentUser();
+  const headers = {
+    Authorization: "Basic " + user.authdata
+  };
+
+  return axios.put(API_URL + `admin/reset-password/${userId}`, {
+    newPassword
+  }, { headers });
+};
+
+const adminGetAllUsers = () => {
+  const user = getCurrentUser();
+  const headers = {
+    Authorization: "Basic " + user.authdata
+  };
+
+  return axios.get(API_URL + "admin/users", { headers });
+};
+
 const AuthService = {
   login,
   register,
@@ -93,6 +114,8 @@ const AuthService = {
   getCurrentUser,
   changePassword,
   updatePreferences,
+  adminResetPassword,
+  adminGetAllUsers,
 };
 
 export default AuthService;

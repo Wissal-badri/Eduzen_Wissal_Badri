@@ -17,12 +17,14 @@ com\eduzen\management\controller\InscriptionController.class
 com\eduzen\management\controller\FormationController.class
 com\eduzen\management\repository\UserRepository.class
 com\eduzen\management\controller\EntrepriseController.class
+com\eduzen\management\model\Ressource.class
 com\eduzen\management\controller\MemoController.class
 com\eduzen\management\repository\RoleRepository.class
 com\eduzen\management\ManagementApplication.class
 com\eduzen\management\controller\FormateurController.class
 com\eduzen\management\repository\IndividuRepository.class
 com\eduzen\management\controller\AuthController.class
+com\eduzen\management\controller\RessourceController.class
 com\eduzen\management\repository\PlanningRepository.class
 com\eduzen\management\repository\InscriptionRepository.class
 com\eduzen\management\model\User.class
