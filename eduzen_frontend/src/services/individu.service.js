@@ -14,10 +14,15 @@ const deleteIndividu = (id, headers) => {
     return axios.delete(API_URL + '/' + id, { headers });
 };
 
+const getPublicCount = () => {
+    return axios.get(`${API_URL}/public/count`);
+};
+
 const IndividuService = {
     register,
     getAllIndividus,
-    deleteIndividu
+    deleteIndividu,
+    getPublicCount
 };
 
 export default IndividuService;

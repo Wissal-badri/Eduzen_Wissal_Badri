@@ -36,6 +36,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/ressources/*/view").permitAll()
                         .requestMatchers("/api/ressources/formation/**").permitAll()
                         .requestMatchers("/api/ressources/debug/**").permitAll()
+                        .requestMatchers("/api/formateurs/public/**").permitAll()
+                        .requestMatchers("/api/inscriptions/public/**").permitAll()
                         .requestMatchers("/api/auth/me").authenticated()
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults()); // Simple authentication for now

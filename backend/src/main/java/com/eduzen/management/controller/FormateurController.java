@@ -208,4 +208,9 @@ public class FormateurController {
                 "email", user.getEmail(),
                 "enabled", user.getEnabled()));
     }
+
+    @GetMapping("/public/count")
+    public long getPublicFormateurCount() {
+        return formateurRepository.count();
+    }
 }

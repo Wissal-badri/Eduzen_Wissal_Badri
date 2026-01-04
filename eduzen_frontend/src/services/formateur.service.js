@@ -31,6 +31,10 @@ const getFormateurRatingByUserId = (userId) => {
     return axios.get(`${API_URL}/user/${userId}/rating`, { headers: authHeader() });
 };
 
+const getPublicCount = () => {
+    return axios.get(`${API_URL}/public/count`);
+};
+
 const FormateurService = {
     getAllFormateurs,
     createFormateur,
@@ -38,7 +42,8 @@ const FormateurService = {
     deleteFormateur,
     approveFormateur,
     getFormateurRating,
-    getFormateurRatingByUserId
-};
+    getFormateurRatingByUserId,
+    getPublicCount
+}; // Don't forget to export it default
 
 export default FormateurService;

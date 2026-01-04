@@ -209,4 +209,9 @@ public class InscriptionController {
         // Count by formation could be added here
         return ResponseEntity.ok(stats);
     }
+
+    @GetMapping("/public/count")
+    public long getPublicInscriptionCount() {
+        return inscriptionRepository.count();
+    }
 }

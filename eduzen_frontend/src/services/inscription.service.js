@@ -31,6 +31,10 @@ const unregisterFromFormation = (formationId) => {
     return axios.delete(`${API_URL}/formation/${formationId}`, { headers: authHeader() });
 };
 
+const getPublicCount = () => {
+    return axios.get(`${API_URL}/public/count`);
+};
+
 const InscriptionService = {
     registerToFormation,
     unregisterFromFormation,
@@ -38,7 +42,8 @@ const InscriptionService = {
     getAllInscriptions,
     assignPlanning,
     updateStatus,
-    getStats
-};
+    getStats,
+    getPublicCount
+}; // Added public count for landing page
 
 export default InscriptionService;

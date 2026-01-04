@@ -35,4 +35,9 @@ public class IndividuController {
         individuRepository.deleteById(id);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/public/count")
+    public long getPublicIndividuCount() {
+        return individuRepository.count();
+    }
 }
