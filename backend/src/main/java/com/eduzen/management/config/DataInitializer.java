@@ -33,20 +33,28 @@ public class DataInitializer {
             // Initialize Admin User
             userRepository.findByUsername("admin").ifPresentOrElse(
                     admin -> {
-                        if (!admin.getPassword().startsWith("$2a$")) {
-                            System.out.println("... DataInitializer: Admin password not encoded. Updating...");
-                            admin.setPassword(passwordEncoder.encode("admin123"));
-                            userRepository.save(admin);
+                        boolean changed = false;
+                        if (admin.getEnabled() == null || !admin.getEnabled()) {
+                            admin.setEnabled(true);
+                            changed = true;
                         }
+                        if (admin.getProfileCompleted() == null || !admin.getProfileCompleted()) {
+                            admin.setProfileCompleted(true);
+                            changed = true;
+                        }
+                        if (changed)
+                            userRepository.save(admin);
                     },
                     () -> {
                         System.out.println("... DataInitializer: Admin user not found. Creating...");
                         Role adminRole = roleRepository.findByName("ADMIN").get();
                         User admin = new User();
                         admin.setUsername("admin");
-                        admin.setPassword(passwordEncoder.encode("admin123"));
+                        admin.setPassword(passwordEncoder.encode("admin"));
                         admin.setEmail("admin@eduzen.com");
                         admin.setRole(adminRole);
+                        admin.setEnabled(true);
+                        admin.setProfileCompleted(true);
                         userRepository.save(admin);
                         System.out.println("... DataInitializer: Admin user created successfully.");
                     });
@@ -54,15 +62,24 @@ public class DataInitializer {
             // Initialize Assistant User
             userRepository.findByUsername("assistant").ifPresentOrElse(
                     assistant -> {
+                        boolean changed = false;
+                        if (assistant.getEnabled() == null || !assistant.getEnabled()) {
+                            assistant.setEnabled(true);
+                            changed = true;
+                        }
+                        if (changed)
+                            userRepository.save(assistant);
                     },
                     () -> {
                         System.out.println("... DataInitializer: Assistant user not found. Creating...");
                         Role assistantRole = roleRepository.findByName("ASSISTANT").get();
                         User assistant = new User();
                         assistant.setUsername("assistant");
-                        assistant.setPassword(passwordEncoder.encode("assistant123"));
+                        assistant.setPassword(passwordEncoder.encode("assistant"));
                         assistant.setEmail("assistant@eduzen.com");
                         assistant.setRole(assistantRole);
+                        assistant.setEnabled(true);
+                        assistant.setProfileCompleted(true);
                         userRepository.save(assistant);
                         System.out.println("... DataInitializer: Assistant user created successfully.");
                     });

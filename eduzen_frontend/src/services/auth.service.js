@@ -28,14 +28,13 @@ const login = (username, password) => {
     });
 };
 
-const register = (username, email, password, role) => {
-  // Registration is not fully implemented in backend yet, but we can call an endpoint if we add it
-  // For now, let's keep it as is or focus on the Admin creation of users
+const register = (username, email, password, role, competences) => {
   return axios.post(API_URL + "signup", {
     username,
     email,
     password,
     role,
+    competences
   });
 };
 

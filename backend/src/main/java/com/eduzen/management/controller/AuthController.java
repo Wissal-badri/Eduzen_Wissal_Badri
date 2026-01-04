@@ -1,6 +1,8 @@
 package com.eduzen.management.controller;
 
 import com.eduzen.management.model.User;
+import com.eduzen.management.model.Formateur;
+import com.eduzen.management.model.Notification;
 import com.eduzen.management.repository.RoleRepository;
 import com.eduzen.management.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +20,19 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final com.eduzen.management.repository.FormateurRepository formateurRepository;
+    private final com.eduzen.management.repository.NotificationRepository notificationRepository;
     private final PasswordEncoder passwordEncoder;
 
     public AuthController(UserRepository userRepository,
             RoleRepository roleRepository,
+            com.eduzen.management.repository.FormateurRepository formateurRepository,
+            com.eduzen.management.repository.NotificationRepository notificationRepository,
             PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.formateurRepository = formateurRepository;
+        this.notificationRepository = notificationRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -77,6 +85,7 @@ public class AuthController {
         String email = payload.get("email");
         String password = payload.get("password");
         String roleName = payload.get("role");
+        String competences = payload.get("competences"); // Keywords for formateurs
 
         if (userRepository.findByUsername(username).isPresent()) {
             return ResponseEntity.badRequest()
@@ -93,10 +102,11 @@ public class AuthController {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setLastPasswordChange(LocalDateTime.now());
+        user.setProfileCompleted(false);
 
         String dbRoleName;
         if ("individu".equalsIgnoreCase(roleName))
-            dbRoleName = "INDIVIDU"; // Note: Ensure this role exists in DB
+            dbRoleName = "INDIVIDU";
         else if ("formateur".equalsIgnoreCase(roleName))
             dbRoleName = "FORMATEUR";
         else if ("assistant".equalsIgnoreCase(roleName))
@@ -104,19 +114,38 @@ public class AuthController {
         else if ("admin".equalsIgnoreCase(roleName))
             dbRoleName = "ADMIN";
         else
-            dbRoleName = "INDIVIDU"; // Default to individual
-
-        // If Role ETUDIANT not in DB yet, you might face issues. Ideally
-        // DataInitializer should have it.
-        // Assuming DataInitializer added standard roles. If 'ETUDIANT' is missing,
-        // fallback to 'ASSISTANT' or fail?
-        // Let's assume it exists or fallback gracefully.
+            dbRoleName = "INDIVIDU";
 
         com.eduzen.management.model.Role role = roleRepository.findByName(dbRoleName)
                 .orElseThrow(() -> new RuntimeException("Error: Role " + dbRoleName + " is not found in database."));
 
         user.setRole(role);
-        userRepository.save(user);
+
+        // External trainers need admin approval
+        if ("FORMATEUR".equals(dbRoleName)) {
+            user.setEnabled(false);
+        } else {
+            user.setEnabled(true);
+        }
+
+        User savedUser = userRepository.save(user);
+
+        // If it's a formateur, create the Formateur record with keywords
+        if ("FORMATEUR".equals(dbRoleName)) {
+            Formateur formateur = new Formateur();
+            formateur.setUser(savedUser);
+            formateur.setCompetences(competences);
+            formateurRepository.save(formateur);
+
+            // Notify admin
+            Notification notif = new Notification();
+            notif.setMessage("Nouvelle demande d'inscription Formateur: " + username);
+            notif.setRead(false);
+            notificationRepository.save(notif);
+
+            return ResponseEntity.ok(Collections.singletonMap("message",
+                    "Votre demande a été envoyée ! Veuillez attendre l'approbation de l'administrateur pour vous connecter."));
+        }
 
         return ResponseEntity.ok(Collections.singletonMap("message", "User registered successfully!"));
     }

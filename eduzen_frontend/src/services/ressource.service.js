@@ -86,6 +86,13 @@ const getFileViewUrl = (id) => {
     return `${API_URL}/${id}/view`;
 };
 
+const getResourceFile = (id) => {
+    return axios.get(`${API_URL}/${id}/view`, {
+        headers: authHeader(),
+        responseType: 'blob'
+    });
+};
+
 const RessourceService = {
     getResourcesByFormation,
     getMyResources,
@@ -98,7 +105,8 @@ const RessourceService = {
     unarchiveResource,
     incrementDownload,
     downloadFile,
-    getFileViewUrl
+    getFileViewUrl,
+    getResourceFile
 };
 
 export default RessourceService;

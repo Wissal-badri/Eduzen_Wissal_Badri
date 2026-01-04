@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FiInfo, FiCheckCircle, FiHome } from 'react-icons/fi';
 import AuthService from "../services/auth.service";
 
 const Login = () => {
@@ -8,6 +9,7 @@ const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("individu");
+    const [competences, setCompetences] = useState("");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [successful, setSuccessful] = useState(false);
@@ -27,22 +29,42 @@ const Login = () => {
                     window.location.reload();
                 },
                 (error) => {
-                    const resMessage = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+                    console.error("Login error details:", error);
+                    console.error("Error response:", error.response);
+
+                    let resMessage = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
+
+                    // Check if it's a 401 error - could be disabled account
+                    if (error.response?.status === 401) {
+                        if (resMessage.toLowerCase().includes('disabled') || resMessage.toLowerCase().includes('not enabled')) {
+                            resMessage = "⏳ Votre compte est en attente d'approbation par un administrateur. Vous recevrez un email une fois approuvé.";
+                        } else {
+                            resMessage = `❌ Identifiants incorrects. Vérifiez votre nom d'utilisateur et mot de passe.\n\nDétails: ${resMessage}`;
+                        }
+                    }
+
                     setLoading(false);
                     setMessage(resMessage);
                 }
             );
         } else {
-            AuthService.register(username, email, password, role).then(
+            AuthService.register(username, email, password, role, competences).then(
                 (response) => {
-                    setMessage(response.data.message || "Registration successful! Please login.");
+                    let successMsg = response.data.message || "Registration successful! Please login.";
+
+                    // Special message for formateurs
+                    if (role === 'formateur') {
+                        successMsg = "✅ Inscription réussie ! Votre demande a été envoyée à l'administrateur. Vous pourrez vous connecter une fois votre compte approuvé (vous recevrez un email).";
+                    }
+
+                    setMessage(successMsg);
                     setSuccessful(true);
                     setLoading(false);
                     setTimeout(() => {
                         setIsLogin(true);
                         setSuccessful(false);
                         setMessage("");
-                    }, 2000);
+                    }, role === 'formateur' ? 5000 : 2000); // Longer display for formateurs
                 },
                 (error) => {
                     const resMessage = (error.response && error.response.data && error.response.data.message) || error.message || error.toString();
@@ -55,9 +77,17 @@ const Login = () => {
     };
 
     return (
-        <div style={{ padding: '4rem 1rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-            <div className="glass card" style={{ width: '100%', maxWidth: '440px', padding: '3rem 2.5rem' }}>
+        <div className="auth-container">
+            <div className="glass card auth-card">
                 <div className="auth-toggle">
+                    <button
+                        className="auth-toggle-btn"
+                        style={{ position: 'absolute', left: '-60px', top: '20px', background: 'transparent', width: 'auto', padding: '0.5rem', opacity: 0.7 }}
+                        onClick={() => navigate("/")}
+                        title="Retour à l'accueil"
+                    >
+                        <FiHome size={24} />
+                    </button>
                     <button
                         className={`auth-toggle-btn ${isLogin ? 'active' : ''}`}
                         onClick={() => { setIsLogin(true); setMessage(""); }}
@@ -72,11 +102,11 @@ const Login = () => {
                     </button>
                 </div>
 
-                <div className="text-center" style={{ marginBottom: '2.5rem' }}>
-                    <h2 className="text-gradient font-black" style={{ fontSize: '2.1rem', marginBottom: '0.6rem', letterSpacing: '-0.02em' }}>
+                <div className="auth-header">
+                    <h2 className="text-gradient font-black auth-title">
                         {isLogin ? "Welcome Back" : "Join EduZen"}
                     </h2>
-                    <p className="text-muted" style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
+                    <p className="text-muted auth-subtitle">
                         {isLogin ? "Enter your credentials to access your dashboard" : "Create your account and start your journey with us"}
                     </p>
                 </div>
@@ -126,6 +156,23 @@ const Login = () => {
                                     required
                                 />
                             </div>
+
+                            {role === 'formateur' && (
+                                <div className="input-group">
+                                    <label className="input-label">Mots-clés (Compétences)</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        value={competences}
+                                        onChange={(e) => setCompetences(e.target.value)}
+                                        placeholder="Ex: Spring Boot, React, DevOps..."
+                                        required
+                                    />
+                                    <small className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.3rem', display: 'block' }}>
+                                        Séparez vos mots-clés par des virgules.
+                                    </small>
+                                </div>
+                            )}
                         </>
                     )}
 
@@ -143,7 +190,7 @@ const Login = () => {
 
                     <div className="input-group" style={{ marginBottom: '2rem' }}>
                         <label className="input-label">Password</label>
-                        <div style={{ position: 'relative' }}>
+                        <div className="password-input-wrapper">
                             <input
                                 type={showPassword ? "text" : "password"}
                                 className="input-field"
@@ -155,33 +202,8 @@ const Login = () => {
                             />
                             <button
                                 type="button"
+                                className="password-toggle-btn"
                                 onClick={() => setShowPassword(!showPassword)}
-                                style={{
-                                    position: 'absolute',
-                                    right: '0.75rem',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    padding: '0.4rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    transition: 'all 0.3s ease',
-                                    backdropFilter: 'blur(4px)'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                                    e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.4)';
-                                    e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 212, 255, 0.3)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                                    e.currentTarget.style.boxShadow = 'none';
-                                }}
                                 title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                             >
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ transition: 'all 0.3s ease' }}>
@@ -230,17 +252,42 @@ const Login = () => {
                     </div>
 
                     {message && (
-                        <div style={{
-                            padding: '1rem',
-                            borderRadius: '0.8rem',
-                            marginBottom: '2rem',
-                            backgroundColor: successful ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)',
-                            color: successful ? 'var(--success)' : 'var(--error)',
-                            fontSize: '0.85rem',
-                            textAlign: 'center',
-                            border: `1px solid ${successful ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
-                            backdropFilter: 'blur(5px)'
-                        }}>
+                        <div
+                            className={`auth-alert ${successful ? 'auth-alert-success' : 'auth-alert-error'}`}
+                            style={{
+                                whiteSpace: 'pre-line',
+                                marginBottom: '1.5rem',
+                                padding: '1rem',
+                                fontSize: '0.9rem',
+                                lineHeight: '1.6',
+                                position: 'relative',
+                                border: successful ? '2px solid #10b981' : '2px solid #ef4444',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                            }}
+                        >
+                            <button
+                                onClick={() => setMessage('')}
+                                style={{
+                                    position: 'absolute',
+                                    top: '0.5rem',
+                                    right: '0.5rem',
+                                    background: 'rgba(255,255,255,0.2)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '24px',
+                                    height: '24px',
+                                    cursor: 'pointer',
+                                    fontSize: '1.2rem',
+                                    lineHeight: '1',
+                                    color: 'inherit',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                                title="Fermer"
+                            >
+                                ×
+                            </button>
                             {message}
                         </div>
                     )}

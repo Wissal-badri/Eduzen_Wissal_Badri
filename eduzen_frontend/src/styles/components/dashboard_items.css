@@ -1,0 +1,108 @@
+/* =============================================
+   DASHBOARD SPECIFIC COMPONENTS
+   ============================================= */
+
+/* Entity Grouping (e.g. by Company) */
+.entity-group {
+    margin-bottom: 4rem;
+}
+
+.entity-group-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.entity-group-indicator {
+    width: 4px;
+    height: 24px;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+.entity-group-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.entity-group-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    opacity: 0.5;
+    margin-left: 1rem;
+}
+
+/* Info Cards */
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--text);
+}
+
+.info-row span {
+    opacity: 0.8;
+}
+
+.info-container-glass {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Status Avatars */
+.status-avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.status-avatar.complete {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.status-avatar.incomplete {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+/* Glass Buttons with Hover */
+.glass-btn-sm {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1rem;
+    border-radius: 0.6rem;
+    background: rgba(6, 182, 212, 0.08);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.glass-btn-sm:hover {
+    background: rgba(6, 182, 212, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
+}

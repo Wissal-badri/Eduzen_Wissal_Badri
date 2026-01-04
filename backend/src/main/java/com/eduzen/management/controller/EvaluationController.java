@@ -50,15 +50,32 @@ public class EvaluationController {
         Evaluation evaluation = new Evaluation();
         evaluation.setUser(userOpt.get());
         evaluation.setFormation(formationOpt.get());
-        evaluation.setQualitePedagogique((Integer) payload.get("qualitePedagogique"));
-        evaluation.setRythme((Integer) payload.get("rythme"));
-        evaluation.setSupportCours((Integer) payload.get("supportCours"));
-        evaluation.setMaitriseSujet((Integer) payload.get("maitriseSujet"));
+
+        // Use a safe way to convert numbers from JSON Map
+        evaluation.setQualitePedagogique(parseSafeInt(payload.get("qualitePedagogique")));
+        evaluation.setRythme(parseSafeInt(payload.get("rythme")));
+        evaluation.setSupportCours(parseSafeInt(payload.get("supportCours")));
+        evaluation.setMaitriseSujet(parseSafeInt(payload.get("maitriseSujet")));
+
         evaluation.setCommentaires((String) payload.get("commentaires"));
         evaluation.setDateEvaluation(LocalDateTime.now());
 
         Evaluation saved = evaluationRepository.save(evaluation);
         return ResponseEntity.ok(saved);
+    }
+
+    private Integer parseSafeInt(Object obj) {
+        if (obj == null)
+            return 0;
+        if (obj instanceof Integer)
+            return (Integer) obj;
+        if (obj instanceof Number)
+            return ((Number) obj).intValue();
+        try {
+            return Integer.parseInt(obj.toString());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     @GetMapping("/formation/{formationId}")

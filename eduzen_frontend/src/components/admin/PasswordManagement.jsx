@@ -84,14 +84,14 @@ const PasswordManagement = () => {
             });
     };
 
-    const getRoleBadgeStyle = (role) => {
-        const styles = {
-            'ADMIN': { background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' },
-            'FORMATEUR': { background: 'rgba(168, 85, 247, 0.15)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)' },
-            'ASSISTANT': { background: 'rgba(34, 211, 238, 0.15)', color: '#22d3ee', border: '1px solid rgba(34, 211, 238, 0.3)' },
-            'INDIVIDU': { background: 'rgba(74, 222, 128, 0.15)', color: '#4ade80', border: '1px solid rgba(74, 222, 128, 0.3)' }
+    const getRoleBadgeClass = (role) => {
+        const classes = {
+            'ADMIN': 'badge-error',
+            'FORMATEUR': 'badge-purple',
+            'ASSISTANT': 'badge-primary',
+            'INDIVIDU': 'badge-success'
         };
-        return styles[role?.replace('ROLE_', '')] || styles['INDIVIDU'];
+        return classes[role?.replace('ROLE_', '')] || classes['INDIVIDU'];
     };
 
     if (loading) {
@@ -135,19 +135,16 @@ const PasswordManagement = () => {
 
             {/* Users Table */}
             <div className="glass card" style={{ overflow: 'hidden' }}>
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div className="table-wrapper">
+                    <table className="table-custom-clean">
                         <thead>
-                            <tr style={{
-                                background: 'rgba(0, 0, 0, 0.3)',
-                                borderBottom: '1px solid rgba(255, 255, 255, 0.1)'
-                            }}>
-                                <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: '600', color: 'var(--text-muted)', fontSize: '0.85rem' }}>ID</th>
-                                <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: '600', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Utilisateur</th>
-                                <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: '600', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Email</th>
-                                <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: '600', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Rôle</th>
-                                <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: '600', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Dernière modification</th>
-                                <th style={{ padding: '1rem 1.5rem', textAlign: 'center', fontWeight: '600', color: 'var(--text-muted)', fontSize: '0.85rem' }}>Action</th>
+                            <tr>
+                                <th>ID</th>
+                                <th>Utilisateur</th>
+                                <th>Email</th>
+                                <th>Rôle</th>
+                                <th>Dernière modification</th>
+                                <th style={{ textAlign: 'center' }}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -158,46 +155,25 @@ const PasswordManagement = () => {
                                     </td>
                                 </tr>
                             ) : filteredUsers.map((user) => (
-                                <tr key={user.id} style={{
-                                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                                    transition: 'background 0.2s ease'
-                                }} className="table-row-hover">
-                                    <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>#{user.id}</td>
-                                    <td style={{ padding: '1rem 1.5rem' }}>
+                                <tr key={user.id} className="table-row-hover" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                                    <td style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>#{user.id}</td>
+                                    <td>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                            <div style={{
-                                                width: '36px',
-                                                height: '36px',
-                                                borderRadius: '50%',
-                                                background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                fontWeight: '700',
-                                                fontSize: '0.8rem',
-                                                color: 'white'
-                                            }}>
+                                            <div className="avatar-circle avatar-sm">
                                                 {user.username?.substring(0, 2).toUpperCase()}
                                             </div>
                                             <span style={{ fontWeight: '600', color: 'var(--text)' }}>{user.username}</span>
                                         </div>
                                     </td>
-                                    <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                                    <td style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                                         {user.email || '-'}
                                     </td>
-                                    <td style={{ padding: '1rem 1.5rem' }}>
-                                        <span style={{
-                                            ...getRoleBadgeStyle(user.role),
-                                            padding: '0.3rem 0.8rem',
-                                            borderRadius: '2rem',
-                                            fontSize: '0.75rem',
-                                            fontWeight: '700',
-                                            textTransform: 'uppercase'
-                                        }}>
+                                    <td>
+                                        <span className={`badge ${getRoleBadgeClass(user.role)}`}>
                                             {user.role?.replace('ROLE_', '') || 'N/A'}
                                         </span>
                                     </td>
-                                    <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                    <td style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                                         {user.lastPasswordChange
                                             ? new Date(user.lastPasswordChange).toLocaleDateString('fr-FR', {
                                                 day: 'numeric',
@@ -207,29 +183,11 @@ const PasswordManagement = () => {
                                             : 'Jamais'
                                         }
                                     </td>
-                                    <td style={{ padding: '1rem 1.5rem', textAlign: 'center' }}>
+                                    <td style={{ textAlign: 'center' }}>
                                         <button
                                             onClick={() => openResetModal(user)}
-                                            style={{
-                                                background: 'linear-gradient(135deg, #00d4ff, #a855f7)',
-                                                border: 'none',
-                                                borderRadius: '0.5rem',
-                                                padding: '0.5rem 1rem',
-                                                color: 'white',
-                                                fontWeight: '600',
-                                                fontSize: '0.85rem',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.3s ease',
-                                                boxShadow: '0 2px 8px rgba(0, 212, 255, 0.3)'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                                e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 212, 255, 0.5)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.transform = 'translateY(0)';
-                                                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 212, 255, 0.3)';
-                                            }}
+                                            className="btn btn-primary"
+                                            style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                                         >
                                             🔑 Réinitialiser
                                         </button>
@@ -382,11 +340,6 @@ const PasswordManagement = () => {
                 </div>
             )}
 
-            <style>{`
-                .table-row-hover:hover {
-                    background: rgba(255, 255, 255, 0.03) !important;
-                }
-            `}</style>
         </section>
     );
 };

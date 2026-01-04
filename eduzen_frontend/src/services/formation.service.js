@@ -19,11 +19,17 @@ const deleteFormation = (id) => {
     return axios.delete(API_URL + '/' + id, { headers: authHeader() });
 };
 
+const getAllFormationsPublic = () => {
+    // Public endpoint - no authentication required
+    return axios.get(API_URL + '/public');
+};
+
 const FormationService = {
     getAllFormations,
     createFormation,
     updateFormation,
     deleteFormation,
+    getAllFormationsPublic,
 };
 
 export default FormationService;

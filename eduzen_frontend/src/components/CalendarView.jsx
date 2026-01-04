@@ -6,6 +6,7 @@ import PlanningService from "../services/planning.service";
 import FormationService from "../services/formation.service";
 import FormateurService from "../services/formateur.service";
 import EntrepriseService from "../services/entreprise.service";
+import { FiUser, FiBriefcase, FiCalendar, FiAlertTriangle, FiX, FiPlus, FiClock } from 'react-icons/fi';
 
 const localizer = momentLocalizer(moment);
 
@@ -162,7 +163,7 @@ const CalendarView = ({ role }) => {
                 <h2 className="text-gradient font-black" style={{ fontSize: '1.8rem', margin: 0 }}>Calendrier des Formations</h2>
                 {(role === 'ADMIN' || role === 'ASSISTANT') && (
                     <button
-                        className="btn btn-primary"
+                        className="btn-add-custom"
                         onClick={() => {
                             setNewEvent({
                                 id: null,
@@ -176,7 +177,7 @@ const CalendarView = ({ role }) => {
                             setShowModal(true);
                         }}
                     >
-                        + Planifier une session
+                        <FiPlus /> Planifier une session
                     </button>
                 )}
             </div>
@@ -291,7 +292,7 @@ const CalendarView = ({ role }) => {
                             </div>
 
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)} style={{ flex: 1 }}>Annuler</button>
+                                <button type="button" className="btn-back-custom" onClick={() => setShowModal(false)} style={{ flex: 1, justifyContent: 'center' }}>Annuler</button>
                                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
                                     {newEvent.id ? "Mettre à jour" : "Planifier"}
                                 </button>
@@ -306,7 +307,7 @@ const CalendarView = ({ role }) => {
                     <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', textAlign: 'left' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <h3 className="text-secondary" style={{ margin: 0, fontWeight: 800 }}>Détails de la Session</h3>
-                            <button className="btn-close" style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: '1.5rem', cursor: 'pointer' }} onClick={() => setShowViewModal(false)}>×</button>
+                            <button className="btn-close" style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setShowViewModal(false)}><FiX /></button>
                         </div>
 
                         <div className="detail-item" style={{ marginBottom: '1.5rem' }}>
@@ -316,17 +317,23 @@ const CalendarView = ({ role }) => {
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
                             <div className="detail-item">
-                                <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>👨‍🏫 Formateur</label>
+                                <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <FiUser size={12} /> Formateur
+                                </label>
                                 <p style={{ margin: '0.2rem 0 0', fontWeight: 500 }}>{selectedEvent.resource.formateur.user.username}</p>
                             </div>
                             <div className="detail-item">
-                                <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>🏢 Entreprise</label>
+                                <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <FiBriefcase size={12} /> Entreprise
+                                </label>
                                 <p style={{ margin: '0.2rem 0 0', fontWeight: 500 }}>{selectedEvent.resource.entreprise.nom}</p>
                             </div>
                         </div>
 
                         <div className="detail-item" style={{ marginBottom: '2rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>📅 Date et Heure</label>
+                            <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <FiCalendar size={12} /> Date et Heure
+                            </label>
                             <p style={{ margin: '0.2rem 0 0', color: 'var(--secondary)', fontWeight: 600 }}>
                                 {selectedEvent.allDay
                                     ? `Toute la journée • ${moment(selectedEvent.start).format('DD MMMM YYYY')}`
@@ -336,7 +343,7 @@ const CalendarView = ({ role }) => {
                         </div>
 
                         <div style={{ display: 'flex', gap: '0.8rem', marginTop: '1rem' }}>
-                            <button className="btn btn-ghost" onClick={() => setShowViewModal(false)} style={{ flex: 1, border: '1px solid rgba(255,255,255,0.1)' }}>Fermer</button>
+                            <button className="btn-back-custom" onClick={() => setShowViewModal(false)} style={{ flex: 1, justifyContent: 'center' }}>Fermer</button>
 
                             {(role === 'ADMIN' || role === 'ASSISTANT') && (
                                 <>
@@ -366,7 +373,7 @@ const CalendarView = ({ role }) => {
                 <div className="modal-overlay" style={{ zIndex: 1100 }}>
                     <div className="modal-content" style={{ maxWidth: '400px', textAlign: 'center', border: '1px solid var(--error)' }}>
                         <div style={{ width: '50px', height: '50px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
-                            <span style={{ fontSize: '1.5rem', color: 'var(--error)' }}>⚠️</span>
+                            <FiAlertTriangle size={24} color="var(--error)" />
                         </div>
                         <h3 style={{ marginBottom: '1rem', fontSize: '1.4rem' }}>Confirmer la suppression</h3>
                         <p className="text-muted" style={{ marginBottom: '2rem' }}>

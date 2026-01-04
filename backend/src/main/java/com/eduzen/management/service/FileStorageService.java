@@ -39,7 +39,11 @@ public class FileStorageService {
 
     public String storeFile(MultipartFile file) {
         // Normalize file name
-        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
+        String fileName = file.getOriginalFilename();
+        if (fileName == null || fileName.isEmpty()) {
+            fileName = "unnamed";
+        }
+        String originalFileName = StringUtils.cleanPath(fileName);
 
         // Check for invalid path
         if (originalFileName.contains("..")) {

@@ -28,6 +28,10 @@
     --glass-border: 1px solid rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
     --nav-bg: rgba(16, 23, 42, 0.8);
+
+    /* Icon Colors - White for Dark Theme */
+    --icon-color: #ffffff;
+    --icon-color-muted: rgba(255, 255, 255, 0.7);
 }
 
 /* Light Theme */
@@ -40,4 +44,8 @@
     --glass-border: 1px solid rgba(0, 0, 0, 0.1);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
     --nav-bg: rgba(255, 255, 255, 0.8);
+
+    /* Icon Colors - Black for Light Theme */
+    --icon-color: #000000;
+    --icon-color-muted: rgba(0, 0, 0, 0.7);
 }

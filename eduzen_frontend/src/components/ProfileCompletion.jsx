@@ -33,7 +33,14 @@ const ProfileCompletion = ({ user, onComplete }) => {
                 window.location.reload(); // Refresh to update context
             })
             .catch(err => {
-                setError("Erreur lors de la mise à jour du profil.");
+                console.error("Profile update error:", err);
+                if (err.response) {
+                    console.error("Error data:", err.response.data);
+                    console.error("Error status:", err.response.status);
+                    setError(err.response.data.message || "Erreur lors de la mise à jour du profil.");
+                } else {
+                    setError("Erreur de connexion au serveur.");
+                }
                 setLoading(false);
             });
     };

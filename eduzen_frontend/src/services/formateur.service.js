@@ -19,11 +19,26 @@ const deleteFormateur = (id) => {
     return axios.delete(`${API_URL}/${id}`, { headers: authHeader() });
 };
 
+const approveFormateur = (id) => {
+    return axios.put(`${API_URL}/${id}/approve`, {}, { headers: authHeader() });
+};
+
+const getFormateurRating = (id) => {
+    return axios.get(`${API_URL}/${id}/rating`, { headers: authHeader() });
+};
+
+const getFormateurRatingByUserId = (userId) => {
+    return axios.get(`${API_URL}/user/${userId}/rating`, { headers: authHeader() });
+};
+
 const FormateurService = {
     getAllFormateurs,
     createFormateur,
     updateFormateur,
-    deleteFormateur
+    deleteFormateur,
+    approveFormateur,
+    getFormateurRating,
+    getFormateurRatingByUserId
 };
 
 export default FormateurService;

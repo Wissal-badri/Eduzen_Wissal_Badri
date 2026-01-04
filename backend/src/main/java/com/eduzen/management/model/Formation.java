@@ -21,8 +21,14 @@ public class Formation {
     @Column(nullable = false)
     private String titre;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "nombre_heures")
     private Integer nombreHeures;
+
+    @Column(name = "duree_en_heures")
+    private Integer dureeEnHeures;
 
     private BigDecimal cout;
 
@@ -33,6 +39,8 @@ public class Formation {
     private String programmeDetaille;
 
     private String categorie;
+
+    private String domaine; // Communication, Marketing, Design, DevOps, etc.
 
     private String ville;
 

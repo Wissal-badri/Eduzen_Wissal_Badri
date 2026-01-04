@@ -15,10 +15,15 @@ const getUnreadCount = () => {
     return axios.get(`${API_URL}/unread/count`, { headers: authHeader() });
 };
 
+const clearAllNotifications = () => {
+    return axios.delete(API_URL, { headers: authHeader() });
+};
+
 const NotificationService = {
     getNotifications,
     markAsRead,
-    getUnreadCount
+    getUnreadCount,
+    clearAllNotifications
 };
 
 export default NotificationService;

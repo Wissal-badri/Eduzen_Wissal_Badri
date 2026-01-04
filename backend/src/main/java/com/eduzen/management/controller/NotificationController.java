@@ -37,4 +37,10 @@ public class NotificationController {
     public long getUnreadCount() {
         return notificationRepository.countByIsReadFalse();
     }
+
+    @DeleteMapping
+    public ResponseEntity<?> clearAllNotifications() {
+        notificationRepository.deleteAll();
+        return ResponseEntity.ok().build();
+    }
 }

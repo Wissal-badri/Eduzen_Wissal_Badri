@@ -30,6 +30,8 @@ public class SecurityConfig {
                         .frameOptions(frameOptions -> frameOptions.disable()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/signup").permitAll()
+                        .requestMatchers("/api/formations/public").permitAll()
+                        .requestMatchers("/api/formateurs/check-status").permitAll()
                         .requestMatchers("/api/ressources/*/download").permitAll()
                         .requestMatchers("/api/ressources/*/view").permitAll()
                         .requestMatchers("/api/ressources/formation/**").permitAll()
@@ -53,9 +55,11 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "http://localhost:5174",
                 "http://localhost:5175",
+                "http://localhost:5176",
                 "http://127.0.0.1:5173",
                 "http://127.0.0.1:5174",
-                "http://127.0.0.1:5175"));
+                "http://127.0.0.1:5175",
+                "http://127.0.0.1:5176"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);

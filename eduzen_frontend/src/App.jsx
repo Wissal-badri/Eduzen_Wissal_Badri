@@ -1,15 +1,33 @@
 import { useState, useEffect } from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
-// Optional if we want bootstrap utils, but using custom css mostly
+import axios from "axios";
+
 import "./index.css";
 
 import AuthService from "./services/auth.service";
 import Login from "./components/Login";
 import Dashboard from "./components/Dashboard";
+import LandingPage from "./components/public/LandingPage";
+import BecomeExpert from "./components/public/BecomeExpert";
+import ApplicationStatus from "./components/public/ApplicationStatus";
+
 function App() {
   const [currentUser, setCurrentUser] = useState(() => AuthService.getCurrentUser());
 
   useEffect(() => {
+    // Standardize all axios calls to handle 401 errors globally
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          AuthService.logout();
+          setCurrentUser(null);
+          window.location.href = "/login?reason=stale";
+        }
+        return Promise.reject(error);
+      }
+    );
+
     // Theme Initialization
     const savedTheme = localStorage.getItem("theme") || "dark";
     document.documentElement.setAttribute("data-theme", savedTheme);
@@ -18,35 +36,26 @@ function App() {
     if (user && JSON.stringify(user) !== JSON.stringify(currentUser)) {
       setCurrentUser(user);
     }
+
+    return () => axios.interceptors.response.eject(interceptor);
   }, []);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Dynamic Navigation */}
-      {!currentUser && (
-        <nav className="glass nav-glass">
-          <Link to={"/"} className="font-black text-gradient" style={{ fontSize: '1.6rem' }}>
-            EduZen
-          </Link>
-          <div style={{ width: '40px' }} />
-        </nav>
-      )}
-
       <main style={{ flex: 1 }}>
         <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={currentUser ? <Navigate to="/dashboard" /> : <Login />} />
+          <Route path="/become-expert" element={<BecomeExpert />} />
+          <Route path="/check-application-status" element={<ApplicationStatus />} />
+
+          {/* Protected Routes */}
           <Route path="/dashboard" element={currentUser ? <Dashboard /> : <Navigate to="/login" />} />
-          <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/profile" element={<Navigate to="/dashboard" />} />
-          <Route path="/home" element={<Navigate to="/login" />} />
+          <Route path="/home" element={<Navigate to="/" />} />
         </Routes>
       </main>
-
-      {!currentUser && (
-        <footer className="text-center text-muted" style={{ padding: '3rem 0', fontSize: '0.9rem' }}>
-          &copy; 2025 EduZen Management System. All rights reserved.
-        </footer>
-      )}
     </div>
   );
 }

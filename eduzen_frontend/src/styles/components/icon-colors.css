@@ -1,0 +1,50 @@
+/* =============================================
+   ICON COLORS - Theme-aware icon styling
+   ONLY for calendar/date inputs
+   ============================================= */
+
+/* Force calendar icon color to WHITE in dark mode */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator,
+input[type="week"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.2);
+    cursor: pointer;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover,
+input[type="week"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Light theme - keep calendar icons BLACK */
+[data-theme='light'] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme='light'] input[type="time"]::-webkit-calendar-picker-indicator,
+[data-theme='light'] input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+[data-theme='light'] input[type="month"]::-webkit-calendar-picker-indicator,
+[data-theme='light'] input[type="week"]::-webkit-calendar-picker-indicator {
+    filter: invert(0);
+}
+
+/* Color scheme for date inputs */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+    color-scheme: dark;
+}
+
+[data-theme='light'] input[type="date"],
+[data-theme='light'] input[type="time"],
+[data-theme='light'] input[type="datetime-local"],
+[data-theme='light'] input[type="month"],
+[data-theme='light'] input[type="week"] {
+    color-scheme: light;
+}

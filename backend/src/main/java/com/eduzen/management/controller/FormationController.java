@@ -64,4 +64,12 @@ public class FormationController {
             return ResponseEntity.ok().<Void>build();
         }).orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/public")
+    public List<Formation> getAllFormationsPublic() {
+        // Return only open formations for public access
+        return formationRepository.findAll().stream()
+                .filter(f -> "OUVERTE".equals(f.getStatut()) || Boolean.TRUE.equals(f.getPourIndividus()))
+                .toList();
+    }
 }
